@@ -30,24 +30,26 @@ a.nostyle:hover {
 }
 
 .code-pre {
-  white-space: pre;
+  white-space: pre-wrap;
   font-family: monospace;
+  padding-left: 20px;
 }
 
 .code-line-number {
-  color: #ccc;
+  color: #aaa;
   width: 30px;
   text-align: right;
+  vertical-align: top;
 }
 
 .code-line-added {
-  background-color: #a6eaa6;
+  background-color: #e5ffe5;
 }
 
 .code-line-deleted {
-  background-color: #ffc7c7;
+  background-color: #ffeaea;
 }
 
 .code-line-expand {
-  background-color: #ddd;
+  background-color: #eee;
 }

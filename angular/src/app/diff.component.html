@@ -1,30 +1,32 @@
-<br>
 <div *ngIf="data$ | async as data">
   <pre>{{data.info}}</pre>
-  <div *ngFor="let d of data.diffs">
-    <h4>{{d.filename}}</h4>
-    <table class="table-code">
-      <ng-template ngFor let-line [ngForOf]="d.lines">
-        <tr [class]="'code-line-' + line.type" *ngIf="line.type !== 'hidden'">
-          <ng-template [ngIf]="line.type === 'expand'">
-            <td colspan="2" class="text-center">
-              <a href="#" (click)="expand(line)" class="d-block"><i class="fas fa-arrows-alt-v"></i></a>
-            </td>
-          </ng-template>
-          <ng-template [ngIf]="line.type !== 'expand'">
-            <td class="code-line-number">{{line.before_line}}</td>
-            <td class="code-line-number">{{line.after_line}}</td>
-          </ng-template>
-          <td class="code-pre">{{line.content}}</td>
-        </tr>
-        <ng-template ngFor let-subline [ngForOf]="line.lines">
-          <tr [class]="'code-line-' + subline.type" *ngIf="subline.type !== 'hidden'">
-            <td class="code-line-number">{{subline.before_line}}</td>
-            <td class="code-line-number">{{subline.after_line}}</td>
-            <td class="code-pre">{{subline.content}}</td>
+  <div *ngFor="let d of data.diffs" class="card mb-4">
+    <div class="card-body">
+      <div class="card-title">{{d.title}}</div>
+      <table class="table-code" *ngIf="d.lines.length">
+        <ng-template ngFor let-line [ngForOf]="d.lines">
+          <tr [class]="'code-line-' + line.type" *ngIf="line.type !== 'hidden'">
+            <ng-template [ngIf]="line.type === 'expand'">
+              <td colspan="2" class="text-center">
+                <a href="#" (click)="expand(line)" class="d-block"><i class="fas fa-arrows-alt-v"></i></a>
+              </td>
+            </ng-template>
+            <ng-template [ngIf]="line.type !== 'expand'">
+              <td class="code-line-number">{{line.before_line}}</td>
+              <td class="code-line-number">{{line.after_line}}</td>
+            </ng-template>
+            <td class="code-pre">{{line.content}}</td>
           </tr>
+          <ng-template ngFor let-subline [ngForOf]="line.lines">
+            <tr [class]="'code-line-' + subline.type" *ngIf="subline.type !== 'hidden'">
+              <td class="code-line-number">{{subline.before_line}}</td>
+              <td class="code-line-number">{{subline.after_line}}</td>
+              <td class="code-pre">{{subline.content}}</td>
+            </tr>
+          </ng-template>
         </ng-template>
-      </ng-template>
-    </table>
+      </table>
+      <div *ngIf="!d.lines.length">No content</div>
+    </div>
   </div>
 </div>

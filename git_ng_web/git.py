@@ -116,23 +116,36 @@ class Git(object):
 
         return content_by_lines
 
-    def _get_filename_and_content_from_patch(self, patch):
-        filename = None
+    def _get_filenames_and_content_from_patch(self, patch):
+        after_filename = None
+        before_filename = None
         content = []
         for line in patch.strip('\n').split('\n'):
+            # TODO: when only renamed we have
+            # rename from file
+            # rename to newfile
             if line.startswith('+++'):
-                filename = line[4:]
+                after_filename = line[4:]
                 continue
-            if filename:
+            if line.startswith('---'):
+                before_filename = line[4:]
+                continue
+            if after_filename:
                 content.append(line)
-        return filename, '\n'.join(content)
+        return before_filename, after_filename, '\n'.join(content)
 
     def _get_diff_lines(self, h, patch):
-        filename, content = self._get_filename_and_content_from_patch(patch)
-        content_by_lines = self._get_file_content_by_lines(filename, h)
+        (before_filename,
+         after_filename,
+         content) = self._get_filenames_and_content_from_patch(patch)
+        # TODO: /dev/null
+        content_by_lines = self._get_file_content_by_lines(after_filename, h)
 
         lines = []
         current_line = 1
+
+        if not content:
+            return before_filename, after_filename, []
 
         # NOTE: Create a class to be able to update value in closure
         class counter(object):
@@ -167,8 +180,15 @@ class Git(object):
                 after = line.split('@@')[1].strip().split(' ')[1]
                 assert(after.startswith('+'))
                 after = after[1:]
-                start_patch_line = int(after.split(',')[0])
-                patch_line = int(after.split(',')[1])
+                split = after.split(',')
+                start_patch_line = int(split[0])
+                if len(split) == 2:
+                    patch_line = int(after.split(',')[1])
+                elif len(split) == 1:
+                    # @@ -0,0 +1 @@
+                    patch_line = 1
+                else:
+                    raise Exception('TODO')
                 add_hidden_lines(current_line, start_patch_line)
                 # start_patch_line & patch_line can be 0 when deleting a file
                 current_line = (start_patch_line + patch_line) or 1
@@ -204,7 +224,7 @@ class Git(object):
             })
 
         add_hidden_lines(current_line, len(content_by_lines))
-        return filename, lines
+        return before_filename, after_filename, lines
 
     def get_diff(self, h):
         res = self.run(['git', 'show', '--no-prefix', h])
@@ -213,9 +233,20 @@ class Git(object):
 
         lis = []
         for part in parts:
-            filename, lines = self._get_diff_lines(h, part)
+            (before_filename,
+             after_filename,
+             lines) = self._get_diff_lines(h, part)
+
+            if before_filename == after_filename:
+                title = after_filename
+            elif before_filename == '/dev/null':
+                title =  'New file %s' % after_filename
+            elif after_filename == '/dev/null':
+                title =  'Delete file %s' % before_filename
+            else:
+                title = 'Rename %s -> %s' % (before_filename, after_filename)
             lis.append({
-                'filename': filename,
+                'title': title,
                 'lines': lines,
             })
 
