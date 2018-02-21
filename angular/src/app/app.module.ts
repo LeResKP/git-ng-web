@@ -8,7 +8,7 @@ import { DiffComponent } from './diff.component';
 import { GitService } from './git.service';
 import { LogListComponent } from './logs/log-list.component';
 import { LogsModule } from './logs/logs.module';
-import { MainComponent } from './main.component';
+import { MainComponent, RedirectBranchComponent } from './main.component';
 
 
 const appRoutes: Routes = [
@@ -17,6 +17,10 @@ const appRoutes: Routes = [
     path: 'p/:id',
     component: MainComponent,
     children: [
+      {
+        path: '',
+        component: RedirectBranchComponent,
+      },
       {
         path: 'b/:branch',
         component: LogListComponent,
@@ -34,7 +38,8 @@ const appRoutes: Routes = [
   declarations: [
     AppComponent,
     MainComponent,
-    DiffComponent
+    DiffComponent,
+    RedirectBranchComponent,
   ],
   imports: [
     BrowserModule,

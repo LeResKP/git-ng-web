@@ -39,11 +39,14 @@ def projects(request):
     data = []
     lis = get_projects_from_settings(request)
     for project in lis:
+        gitobj = git.Git(project['path'])
         dic = {
             'id': project['id'],
             'name': project['name'],
+            'current_branch': gitobj.get_current_branch(),
         }
-        dic.update(git.Git(project['path']).get_branches())
+        dic.update(gitobj.get_branches())
+
         data.append(dic)
 
     return data

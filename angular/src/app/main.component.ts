@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, ParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 
 import 'rxjs/add/operator/switchMap';
 
@@ -56,6 +56,28 @@ export class MainComponent implements OnInit {
 
     this.gitService.getProjects().subscribe(projects => {
       this.projects = projects;
+    });
+  }
+}
+
+
+@Component({
+  template: '',
+})
+export class RedirectBranchComponent implements OnInit {
+
+  private project$;
+
+  constructor(private route: ActivatedRoute, private router: Router, private gitService: GitService) {}
+
+  ngOnInit() {
+    const projectId = this.route.parent.snapshot.params['id'];
+    this.project$ = this.route.paramMap
+        .switchMap((params: ParamMap) =>
+          this.gitService.getProject(projectId));
+
+    this.project$.subscribe(project => {
+      this.router.navigate(['/p', projectId, 'b', project.current_branch || project.local_branches[0]]);
     });
   }
 }

@@ -32,6 +32,9 @@ class Git(object):
             if not line:
                 continue
             line = line[2:]
+            if line.startswith('(HEAD'):
+                # We are not on a real branch
+                continue
             if line.startswith('remotes/origin/HEAD'):
                 continue
             if line.startswith('remotes/'):
@@ -43,6 +46,20 @@ class Git(object):
             'local_branches': lbranches,
             'remote_branches': rbranches,
         }
+
+    def get_current_branch(self):
+        res = self.run(['git', 'branch', '-a'])
+        for line in res.split('\n'):
+            if not line:
+                continue
+            if line.startswith('*'):
+                if line.startswith('* (HEAD'):
+                    # We are not on a real branch
+                    break
+                return line[2:]
+        branches = self.get_branches()
+        if branches['local_branches']:
+            return branches['local_branches'][0]
 
     def get_logs(self, branch):
         separator = u'\x00'  # separator added with -z
