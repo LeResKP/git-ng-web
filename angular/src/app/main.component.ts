@@ -9,33 +9,42 @@ import { GitService } from './git.service';
 @Component({
   selector: 'app-main',
   template: `
-    <div class="container-fuild">
+    <nav class="navbar navbar-dark bg-dark p-0">
+      <a class="navbar-brand col-md-2" href="#">Git ngWeb</a>
+    </nav>
+    <div class="container-fluid">
       <div class="row">
-        <div class="col-md-2 bg-light">
-          <h5>Projects</h5>
+        <nav class="col-md-2 bg-light sidebar p-0">
+          <div class="p-1">Projects</div>
           <ul class="nav flex-column">
-            <li *ngFor="let project of projects">
-              <a [routerLink]="['/p', project.id]">{{project.name}}</a>
+            <li *ngFor="let project of projects" class="nav-item">
+              <small>
+                <a [routerLink]="['/p', project.id]" routerLinkActive="active" class="nav-link px-2 py-1">{{project.name}}</a>
+              </small>
             </li>
           </ul>
 
           <div *ngIf="project$ | async as project">
-            <h5>Local branches</h5>
+            <div class="p-1 mt-3">Local branches</div>
             <ul class="nav flex-column">
               <li *ngFor="let branch of project?.local_branches">
-              <a [routerLink]="['/p', project.id, 'b', branch]">{{branch}}</a>
+              <small>
+              <a [routerLink]="['/p', project.id, 'b', branch]" routerLinkActive="active" class="nav-link px-2 py-1">{{branch}}</a>
+              </small>
               </li>
             </ul>
 
-            <h5>Remote branches</h5>
+            <div class="p-1 mt-3">Remote branches</div>
             <ul class="nav flex-column">
               <li *ngFor="let branch of project?.remote_branches">
-                <a [routerLink]="['/p', project.id, 'b', branch]">{{branch}}</a>
+              <small>
+                <a [routerLink]="['/p', project.id, 'b', branch]" routerLinkActive="active" class="nav-link px-2 py-1">{{branch}}</a>
+              </small>
               </li>
             </ul>
           </div>
-        </div>
-        <div class="col-md-10">
+        </nav>
+        <div class="col-md-10 pt-3">
           <router-outlet></router-outlet>
         </div>
       </div>

@@ -1,5 +1,32 @@
+.sidebar {
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+  height: calc(100vh - 40px);  /* -40px for navbar */
+  padding-top: .5rem;
+}
+
+.sidebar .nav-link {
+  color: #333;
+}
+
+.sidebar .nav-link:hover {
+  text-decoration: underline;
+}
+
+.sidebar .nav-link.active {
+  color: #007bff;
+}
+
+a.nostyle {
+  color: inherit;
+}
+
+a.nostyle:hover {
+  text-decoration: none;
+}
+
 .table-code {
   font-size: 12px;
+  width: 100%;
 }
 
 .code-pre {

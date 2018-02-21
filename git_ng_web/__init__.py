@@ -1,5 +1,8 @@
+import datetime
 from pyramid.config import Configurator
 from pyramid.events import NewRequest
+from pyramid.renderers import JSON
+
 
 
 def add_cors_headers_response_callback(event):
@@ -18,6 +21,14 @@ def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
     config = Configurator(settings=settings)
+
+    def datetime_adapter(obj, request):
+        return obj.isoformat()
+
+    json_renderer = JSON()
+    json_renderer.add_adapter(datetime.datetime, datetime_adapter)
+    config.add_renderer('json', json_renderer)
+
     config.include('pyramid_mako')
     config.add_subscriber(add_cors_headers_response_callback, NewRequest)
     config.add_static_view('static', 'static', cache_max_age=3600)

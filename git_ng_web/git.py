@@ -1,4 +1,6 @@
+import datetime
 import subprocess
+from email.utils import parseaddr
 
 
 # These constant values are used in angular
@@ -64,17 +66,42 @@ class Git(object):
     def get_logs(self, branch):
         separator = u'\x00'  # separator added with -z
         res = self.run(
-            ['git', 'log', '--decorate', '-z', '-n', '50', branch, '--'])
+            ['git', 'log', '--decorate', '-z',
+             '--date', 'unix',
+             '-n', '50', branch, '--'])
 
         data = []
         logs = res.split(separator)
         for log in logs:
             lis = log.split('\n')
+            hashes = lis[0].split(' ')
+            h = hashes[1]
+            labels = []
+            label_line = ' '.join(hashes[2:]).strip().strip('(').strip(')')
+            for label in label_line.split(','):
+                labels.append(label.strip())
+            author_name, author_email = parseaddr(
+                ' '.join(lis[1].split(' ')[1:]))
+
+            messages = lis[3:]
+            short_message = ''
+            for msg in messages:
+                if msg.strip():
+                    short_message = msg.strip()
+                    break
+
             data.append({
-                'hash': ' '.join(lis[0].split(' ')[1:]),
-                'author': ' '.join(lis[1].split(' ')[1:]),
-                'date': ' '.join(lis[2].split(' ')[1:]),
-                'message': '\n'.join(lis[3:])
+                'hash': h,
+                'short_hash': h[:7],
+                'author': {
+                    'name': author_name,
+                    'email': author_email,
+                },
+                'date': datetime.datetime.fromtimestamp(
+                    int(' '.join(lis[2].split(' ')[1:]))),
+                'short_message': short_message,
+                'message': '\n'.join(messages),
+                'labels': labels,
             })
 
         return data
