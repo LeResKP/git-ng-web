@@ -4,9 +4,10 @@ from pyramid.view import view_config
 from . import git
 
 
-@view_config(route_name='home', renderer='templates/mytemplate.mako')
-def my_view(request):
-    return {'project': 'Git Ng Web'}
+@view_config(route_name='catchall_static',
+             renderer='ng/index.html.mako')
+def index_view(request):
+    return {}
 
 
 def get_projects_from_settings(request):
