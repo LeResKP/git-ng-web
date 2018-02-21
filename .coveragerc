@@ -1,0 +1,3 @@
+[run]
+source = git_ng_web
+omit = git_ng_web/test*
