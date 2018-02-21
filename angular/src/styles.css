@@ -1,1 +1,26 @@
-/* You can add global styles to this file, and also import other style files */
+.table-code {
+  font-size: 12px;
+}
+
+.code-pre {
+  white-space: pre;
+  font-family: monospace;
+}
+
+.code-line-number {
+  color: #ccc;
+  width: 30px;
+  text-align: right;
+}
+
+.code-line-added {
+  background-color: #a6eaa6;
+}
+
+.code-line-deleted {
+  background-color: #ffc7c7;
+}
+
+.code-line-expand {
+  background-color: #ddd;
+}

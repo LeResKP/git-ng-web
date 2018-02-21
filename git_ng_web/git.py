@@ -1,5 +1,12 @@
-
 import subprocess
+
+
+# These constant values are used in angular
+DIFF_LINE_TYPE_ADDED = 'added'
+DIFF_LINE_TYPE_DELETED = 'deleted'
+DIFF_LINE_TYPE_CONTEXT = 'context'
+DIFF_LINE_TYPE_EXPAND = 'expand'
+DIFF_LINE_TYPE_HIDDEN = 'hidden'
 
 
 class Git(object):
@@ -54,3 +61,121 @@ class Git(object):
             })
 
         return data
+
+    def _get_file_content_by_lines(self, filename, h):
+        """Get the file content at revision
+        """
+        res = self.run(['git', 'show', '%s:%s' % (h, filename)])
+        content_by_lines = {}
+        for index, line in enumerate(res.split('\n'), start=1):
+            content_by_lines[index] = line
+
+        return content_by_lines
+
+    def _get_filename_and_content_from_patch(self, patch):
+        filename = None
+        content = []
+        for line in patch.strip('\n').split('\n'):
+            if line.startswith('+++'):
+                filename = line[4:]
+                continue
+            if filename:
+                content.append(line)
+        return filename, '\n'.join(content)
+
+    def _get_diff_lines(self, h, patch):
+        filename, content = self._get_filename_and_content_from_patch(patch)
+        content_by_lines = self._get_file_content_by_lines(filename, h)
+
+        lines = []
+        current_line = 1
+
+        # NOTE: Create a class to be able to update value in closure
+        class counter(object):
+            before_line = 0
+            after_line = 0
+
+        def add_hidden_lines(start, end):
+            sublines = []
+            for nb in range(start, end):
+                counter.after_line += 1
+                counter.before_line += 1
+                sublines.append({
+                    'type': DIFF_LINE_TYPE_HIDDEN,
+                    'after_line': counter.after_line,
+                    'before_line': counter.before_line,
+                    'content': ' %s' % content_by_lines[nb]
+                })
+            if sublines:
+                lines.append({
+                    'type': DIFF_LINE_TYPE_EXPAND,
+                    'after_line': None,
+                    'before_line': None,
+                    'content': line,
+                    'lines': sublines,
+                })
+
+        for line in content.split('\n'):
+            if line.startswith('@@'):
+                # We need to insert the lines before
+                # @@ -18,6 +18,7 @@ def main(global_config, **settings):
+                # we want to get +18,7
+                after = line.split('@@')[1].strip().split(' ')[1]
+                assert(after.startswith('+'))
+                after = after[1:]
+                start_patch_line = int(after.split(',')[0])
+                patch_line = int(after.split(',')[1])
+                add_hidden_lines(current_line, start_patch_line)
+                # start_patch_line & patch_line can be 0 when deleting a file
+                current_line = (start_patch_line + patch_line) or 1
+                continue
+
+            if line.startswith('+'):
+                counter.after_line += 1
+                lines.append({
+                    'type': DIFF_LINE_TYPE_ADDED,
+                    'after_line': counter.after_line,
+                    'before_line': None,
+                    'content': line,
+                })
+                continue
+
+            if line.startswith('-'):
+                counter.before_line += 1
+                lines.append({
+                    'type': DIFF_LINE_TYPE_DELETED,
+                    'after_line': None,
+                    'before_line': counter.before_line,
+                    'content': line,
+                })
+                continue
+
+            counter.after_line += 1
+            counter.before_line += 1
+            lines.append({
+                'type': DIFF_LINE_TYPE_CONTEXT,
+                'after_line': counter.after_line,
+                'before_line': counter.before_line,
+                'content': line,
+            })
+
+        add_hidden_lines(current_line, len(content_by_lines))
+        return filename, lines
+
+    def get_diff(self, h):
+        res = self.run(['git', 'show', '--no-prefix', h])
+        parts = res.split('diff --git')
+        info = parts.pop(0)
+
+        lis = []
+        for part in parts:
+            filename, lines = self._get_diff_lines(h, part)
+            lis.append({
+                'filename': filename,
+                'lines': lines,
+            })
+
+        return {
+            'info': info,
+            'diffs': lis
+        }

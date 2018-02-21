@@ -4,6 +4,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { RouterModule, Routes } from '@angular/router';
 
 import { AppComponent } from './app.component';
+import { DiffComponent } from './diff.component';
 import { GitService } from './git.service';
 import { LogListComponent } from './logs/log-list.component';
 import { LogsModule } from './logs/logs.module';
@@ -20,6 +21,10 @@ const appRoutes: Routes = [
         path: 'b/:branch',
         component: LogListComponent,
       },
+      {
+        path: 'd/:hash',
+        component: DiffComponent,
+      },
     ]
   },
 ];
@@ -28,7 +33,8 @@ const appRoutes: Routes = [
 @NgModule({
   declarations: [
     AppComponent,
-    MainComponent
+    MainComponent,
+    DiffComponent
   ],
   imports: [
     BrowserModule,

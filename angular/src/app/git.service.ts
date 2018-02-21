@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 
+import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 
 
@@ -16,8 +17,8 @@ export class GitService {
 
   constructor(private http: HttpClient) { }
 
-  getProjects() {
-    return this.http.get(API_URLS.projects);
+  getProjects(): Observable<[any]> {
+    return this.http.get<[any]>(API_URLS.projects);
   }
 
   getProject(id) {
@@ -29,5 +30,10 @@ export class GitService {
   getLogs(projectId, branch) {
     const url = `${baseHref}api/projects/${projectId}/logs`;
     return this.http.get(url, { params: new HttpParams().set('branch', branch) });
+  }
+
+  getDiff(projectId, hash) {
+    const url = `${baseHref}api/projects/${projectId}/diff/${hash}`;
+    return this.http.get(url);
   }
 }

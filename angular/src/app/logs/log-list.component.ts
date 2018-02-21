@@ -11,10 +11,12 @@ import { GitService } from '../git.service';
   template: `
     <ul class="list-group">
       <li class="list-group-item" *ngFor="let log of logs$ | async">
-        {{log.author}}<br>
-        {{log.date}}<br>
-        {{log.hash}}<br>
-        <pre>{{log.message}}</pre>
+        <a [routerLink]="['/p', projectId, 'd', log.hash]">
+          {{log.author}}<br>
+          {{log.date}}<br>
+          {{log.hash}}<br>
+          <pre>{{log.message}}</pre>
+        </a>
       </li>
     </ul>
   `,
@@ -22,14 +24,16 @@ import { GitService } from '../git.service';
 export class LogListComponent implements OnInit {
 
   public logs$;
+  public projectId;
 
   constructor(private route: ActivatedRoute, private gitService: GitService) {}
 
   ngOnInit() {
+    this.projectId = this.route.parent.snapshot.params['id'];
     this.logs$ = this.route.paramMap
         .switchMap((params: ParamMap) =>
           this.gitService.getLogs(
-            this.route.parent.snapshot.params['id'],
+            this.projectId,
             params.get('branch')));
   }
 

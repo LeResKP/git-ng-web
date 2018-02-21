@@ -24,5 +24,6 @@ def main(global_config, **settings):
     config.add_route('home', '/')
     config.add_route('projects', '/api/projects')
     config.add_route('logs', '/api/projects/:project_id/logs')
+    config.add_route('diff', '/api/projects/:project_id/diff/:hash')
     config.scan()
     return config.make_wsgi_app()
