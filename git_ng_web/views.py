@@ -13,7 +13,7 @@ def get_projects_from_settings(request):
     settings = request.registry.settings
     projects = []
     lis = settings.get('git_projects').split('\n')
-    index = 1
+    index = 0
     for line in lis:
         if not line:
             continue
@@ -25,6 +25,13 @@ def get_projects_from_settings(request):
         })
         index += 1
     return projects
+
+
+def get_project(request, project_id):
+    lis = get_projects_from_settings(request)
+    for project in lis:
+        if project['id'] == project_id:
+            return project
 
 
 @view_config(route_name='projects', renderer='json')
@@ -40,3 +47,17 @@ def projects(request):
         data.append(dic)
 
     return data
+
+
+@view_config(route_name='logs', renderer='json')
+def logs(request):
+    project_id = int(request.matchdict['project_id'])
+    branch = request.GET.get('branch')
+    project = get_project(request, project_id)
+    if not project:
+        raise Exception('TODO')
+    gitobj = git.Git(project['path'])
+    branches = gitobj.get_branches()
+    if branch not in sum(branches.values(), []):
+        raise Exception('TODO')
+    return gitobj.get_logs(branch)

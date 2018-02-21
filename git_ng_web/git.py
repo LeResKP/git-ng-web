@@ -36,3 +36,21 @@ class Git(object):
             'local_branches': lbranches,
             'remote_branches': rbranches,
         }
+
+    def get_logs(self, branch):
+        separator = u'\x00'  # separator added with -z
+        res = self.run(
+            ['git', 'log', '--decorate', '-z', '-n', '50', branch, '--'])
+
+        data = []
+        logs = res.split(separator)
+        for log in logs:
+            lis = log.split('\n')
+            data.append({
+                'hash': ' '.join(lis[0].split(' ')[1:]),
+                'author': ' '.join(lis[1].split(' ')[1:]),
+                'date': ' '.join(lis[2].split(' ')[1:]),
+                'message': '\n'.join(lis[3:])
+            })
+
+        return data
