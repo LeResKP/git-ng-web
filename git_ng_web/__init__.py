@@ -27,6 +27,7 @@ def main(global_config, **settings):
 
     json_renderer = JSON()
     json_renderer.add_adapter(datetime.datetime, datetime_adapter)
+    json_renderer.add_adapter(datetime.date, datetime_adapter)
     config.add_renderer('json', json_renderer)
 
     config.include('pyramid_mako')

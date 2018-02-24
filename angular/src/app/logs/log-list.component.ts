@@ -12,21 +12,25 @@ import { GitService } from '../git.service';
   <div class="container-fluid">
     <div class="row app-log-list">
       <div [class.col-md-4]="hash" [class.col-md-12]="!hash">
-        <ul class="list-group">
-          <li class="list-group-item" *ngFor="let log of logs$ | async" [class.active]="hash === log.hash">
-            <a [routerLink]="['/p', projectId, 'b', branch, 'commits', log.hash]" class="nostyle">
-              {{log.short_message}}
-              <div class="clearfix small">
-                <div class="float-left">{{log.author.name || log.author.email}}</div>
-                <div class="float-left">
-                  <span *ngFor="let label of log.labels" class="badge badge-secondary ml-2">{{label}}</span>
-                </div>
-                <div class="float-right"><a [routerLink]="['/p', projectId, 'b', branch, 'commits', log.hash]">{{log.short_hash}}</a></div>
-                <div class="float-right mr-2">{{log.date | date:'short'}}</div>
-              </div>
-            </a>
-          </li>
-        </ul>
+        <div class="app-log-groups">
+        <div *ngFor="let log of logs$ | async">
+          <div class="log-date small text-secondary"><i class="far fa-clock"></i> {{log[0] | date}}</div>
+            <ul class="list-group">
+              <li class="list-group-item" *ngFor="let log of log[1]" [class.active]="hash === log.hash">
+                <a [routerLink]="['/p', projectId, 'b', branch, 'commits', log.hash]" class="nostyle d-block">
+                  {{log.short_message}}
+                  <div class="clearfix small">
+                    <div class="float-left">{{log.author.name || log.author.email}}</div>
+                    <div class="float-right"><a [routerLink]="['/p', projectId, 'b', branch, 'commits', log.hash]">{{log.short_hash}}</a></div>
+                  </div>
+                  <div class="small">
+                    <span *ngFor="let label of log.labels" class="badge badge-secondary">{{label}}</span>
+                  </div>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
       <div class="col-md-8" *ngIf="hash">
         <div class="clearfix">

@@ -1,3 +1,4 @@
+from collections import defaultdict
 import datetime
 import subprocess
 from email.utils import parseaddr
@@ -70,8 +71,8 @@ class Git(object):
              '--date', 'unix',
              '-n', '50', branch, '--'])
 
-        data = []
         logs = res.split(separator)
+        dic = defaultdict(list)
         for log in logs:
             lis = log.split('\n')
             hashes = lis[0].split(' ')
@@ -90,21 +91,25 @@ class Git(object):
                     short_message = msg.strip()
                     break
 
-            data.append({
+            date = datetime.datetime.fromtimestamp(
+                int(' '.join(lis[2].split(' ')[1:])))
+
+            dic[date.date()].append({
                 'hash': h,
                 'short_hash': h[:7],
                 'author': {
                     'name': author_name,
                     'email': author_email,
                 },
-                'date': datetime.datetime.fromtimestamp(
-                    int(' '.join(lis[2].split(' ')[1:]))),
+                'date': date,
                 'short_message': short_message,
                 'message': '\n'.join(messages),
                 'labels': labels,
             })
 
-        return data
+        return [t for t in sorted(dic.items(),
+                                  key=lambda(k, v): k, reverse=True)]
+
 
     def _get_file_content_by_lines(self, filename, h):
         """Get the file content at revision
