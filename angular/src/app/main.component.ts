@@ -22,9 +22,7 @@ import { SelectorChoice } from './selector.component';
         </li>
       </ul>
     </nav>
-    <div class="container-fluid">
-      <router-outlet></router-outlet>
-    </div>
+    <router-outlet></router-outlet>
   `,
 })
 export class MainComponent implements OnInit {
@@ -44,14 +42,14 @@ export class MainComponent implements OnInit {
           project.local_branches.map(branch => {
             this.branchChoices.push({
               label: branch,
-              routerLink: ['/p', project.id, 'b', branch],
+              routerLink: ['/p', project.id, 'b', branch, 'commits'],
             });
           });
 
           project.remote_branches.map(branch => {
             this.branchChoices.push({
               label: branch,
-              routerLink: ['/p', project.id, 'b', branch],
+              routerLink: ['/p', project.id, 'b', branch, 'commits'],
             });
           });
         });
@@ -83,7 +81,7 @@ export class RedirectBranchComponent implements OnDestroy, OnInit {
         .switchMap((params: ParamMap) =>
           this.gitService.getProject(projectId))
         .subscribe(project => {
-          this.router.navigate(['/p', projectId, 'b', project.current_branch || project.local_branches[0]]);
+          this.router.navigate(['/p', projectId, 'b', project.current_branch || project.local_branches[0], 'commits']);
         });
   }
 

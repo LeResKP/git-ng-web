@@ -26,12 +26,12 @@ const appRoutes: Routes = [
         component: RedirectBranchComponent,
       },
       {
-        path: 'b/:branch',
+        path: 'b/:branch/commits',
         component: LogListComponent,
       },
       {
-        path: 'd/:hash',
-        component: DiffComponent,
+        path: 'b/:branch/commits/:hash',
+        component: LogListComponent,
       },
     ]
   },
@@ -42,7 +42,6 @@ const appRoutes: Routes = [
   declarations: [
     AppComponent,
     MainComponent,
-    DiffComponent,
     RedirectBranchComponent,
     SelectorComponent,
   ],

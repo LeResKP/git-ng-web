@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 
 import 'rxjs/add/operator/switchMap';
@@ -10,18 +10,31 @@ import { GitService } from './git.service';
   selector: 'app-diff',
   templateUrl: `./diff.component.html`,
 })
-export class DiffComponent implements OnInit {
+export class DiffComponent {
 
   public data$;
+  private _hash;
+
+  @Input()
+  set hash(value) {
+    if (value) {
+      this._hash = value;
+      this.load();
+    }
+  }
+
+  get hash() {
+    return this._hash;
+  }
 
   constructor(private route: ActivatedRoute, private gitService: GitService) {}
 
-  ngOnInit() {
+  load() {
     this.data$ = this.route.paramMap
         .switchMap((params: ParamMap) =>
           this.gitService.getDiff(
             this.route.parent.snapshot.params['id'],
-            params.get('hash')));
+            this.hash));
   }
 
   expand(line) {

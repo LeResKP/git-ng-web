@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
 import { LogListComponent } from './log-list.component';
+import { DiffComponent } from '../diff.component';
 
 
 @NgModule({
@@ -10,6 +11,9 @@ import { LogListComponent } from './log-list.component';
     CommonModule,
     RouterModule,
   ],
-  declarations: [LogListComponent]
+  declarations: [
+    DiffComponent,
+    LogListComponent,
+  ]
 })
 export class LogsModule { }
