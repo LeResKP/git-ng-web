@@ -53,3 +53,8 @@ a.nostyle:hover {
 .code-line-expand {
   background-color: #eee;
 }
+
+.navbar-expand-sm .navbar-nav .dropdown-menu {
+  /* Hack since ng-bootstrap doesn't calculate the position correctly */
+  top: 0 !important;
+}

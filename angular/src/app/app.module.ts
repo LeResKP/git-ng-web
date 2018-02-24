@@ -3,12 +3,16 @@ import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule, Routes } from '@angular/router';
 
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+
+
 import { AppComponent } from './app.component';
 import { DiffComponent } from './diff.component';
 import { GitService } from './git.service';
 import { LogListComponent } from './logs/log-list.component';
 import { LogsModule } from './logs/logs.module';
 import { MainComponent, RedirectBranchComponent } from './main.component';
+import { SelectorComponent } from './selector.component';
 
 
 const appRoutes: Routes = [
@@ -40,11 +44,13 @@ const appRoutes: Routes = [
     MainComponent,
     DiffComponent,
     RedirectBranchComponent,
+    SelectorComponent,
   ],
   imports: [
     BrowserModule,
     HttpClientModule,
     RouterModule.forRoot(appRoutes),
+    NgbModule.forRoot(),
     LogsModule,
   ],
   providers: [GitService],

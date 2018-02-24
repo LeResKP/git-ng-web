@@ -1,70 +1,68 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 
 import 'rxjs/add/operator/switchMap';
+import { Subscription } from 'rxjs/Subscription';
 
 import { GitService } from './git.service';
+import { SelectorChoice } from './selector.component';
 
 
 @Component({
   selector: 'app-main',
   template: `
-    <nav class="navbar navbar-dark bg-dark p-0">
+    <nav class="navbar navbar-expand-sm navbar-light bg-light p-0">
       <a class="navbar-brand col-md-2" href="#">Git ngWeb</a>
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item dropdown">
+          <app-selector label="Project" [choices]="projectChoices"></app-selector>
+        </li>
+        <li class="nav-item dropdown">
+          <app-selector label="Branch" [choices]="branchChoices"></app-selector>
+        </li>
+      </ul>
     </nav>
     <div class="container-fluid">
-      <div class="row">
-        <nav class="col-md-2 bg-light sidebar p-0">
-          <div class="p-1">Projects</div>
-          <ul class="nav flex-column">
-            <li *ngFor="let project of projects" class="nav-item">
-              <small>
-                <a [routerLink]="['/p', project.id]" routerLinkActive="active" class="nav-link px-2 py-1">{{project.name}}</a>
-              </small>
-            </li>
-          </ul>
-
-          <div *ngIf="project$ | async as project">
-            <div class="p-1 mt-3">Local branches</div>
-            <ul class="nav flex-column">
-              <li *ngFor="let branch of project?.local_branches">
-              <small>
-              <a [routerLink]="['/p', project.id, 'b', branch]" routerLinkActive="active" class="nav-link px-2 py-1">{{branch}}</a>
-              </small>
-              </li>
-            </ul>
-
-            <div class="p-1 mt-3">Remote branches</div>
-            <ul class="nav flex-column">
-              <li *ngFor="let branch of project?.remote_branches">
-              <small>
-                <a [routerLink]="['/p', project.id, 'b', branch]" routerLinkActive="active" class="nav-link px-2 py-1">{{branch}}</a>
-              </small>
-              </li>
-            </ul>
-          </div>
-        </nav>
-        <div class="col-md-10 pt-3">
-          <router-outlet></router-outlet>
-        </div>
-      </div>
+      <router-outlet></router-outlet>
     </div>
   `,
 })
 export class MainComponent implements OnInit {
 
-  public projects;
-  public project$;
+  public projectChoices: SelectorChoice[] = [];
+  public branchChoices: SelectorChoice[];
 
   constructor(private route: ActivatedRoute, private gitService: GitService) {}
 
   ngOnInit() {
-    this.project$ = this.route.paramMap
+    // NOTE: no need to unsubscribe here since the component is never destroyed
+    this.route.paramMap
         .switchMap((params: ParamMap) =>
-          this.gitService.getProject(params.get('id')));
+          this.gitService.getProject(params.get('id')))
+        .subscribe(project => {
+          this.branchChoices = [];
+          project.local_branches.map(branch => {
+            this.branchChoices.push({
+              label: branch,
+              routerLink: ['/p', project.id, 'b', branch],
+            });
+          });
+
+          project.remote_branches.map(branch => {
+            this.branchChoices.push({
+              label: branch,
+              routerLink: ['/p', project.id, 'b', branch],
+            });
+          });
+        });
 
     this.gitService.getProjects().subscribe(projects => {
-      this.projects = projects;
+      projects.map(project => {
+        this.projectChoices.push({
+          label: project.name,
+          routerLink: ['/p', project.id],
+        });
+      });
     });
   }
 }
@@ -73,20 +71,23 @@ export class MainComponent implements OnInit {
 @Component({
   template: '',
 })
-export class RedirectBranchComponent implements OnInit {
+export class RedirectBranchComponent implements OnDestroy, OnInit {
 
-  private project$;
+  private subscription: Subscription;
 
   constructor(private route: ActivatedRoute, private router: Router, private gitService: GitService) {}
 
   ngOnInit() {
     const projectId = this.route.parent.snapshot.params['id'];
-    this.project$ = this.route.paramMap
+    this.subscription = this.route.paramMap
         .switchMap((params: ParamMap) =>
-          this.gitService.getProject(projectId));
+          this.gitService.getProject(projectId))
+        .subscribe(project => {
+          this.router.navigate(['/p', projectId, 'b', project.current_branch || project.local_branches[0]]);
+        });
+  }
 
-    this.project$.subscribe(project => {
-      this.router.navigate(['/p', projectId, 'b', project.current_branch || project.local_branches[0]]);
-    });
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
   }
 }
