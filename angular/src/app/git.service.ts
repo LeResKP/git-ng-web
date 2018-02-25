@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 
-import { Observable } from 'rxjs/Observable';
+import { Observable, ReplaySubject } from 'rxjs/Rx';
 import 'rxjs/add/operator/map';
 
 
@@ -15,7 +15,15 @@ const API_URLS: any = {
 @Injectable()
 export class GitService {
 
+  commitHash: ReplaySubject<string> = new ReplaySubject(1);
+
   constructor(private http: HttpClient) { }
+
+
+  setCommitHash(hash) {
+    console.log('setCommitHash', hash);
+    this.commitHash.next(hash);
+  }
 
   getProjects(): Observable<[any]> {
     return this.http.get<[any]>(API_URLS.projects);
@@ -27,9 +35,13 @@ export class GitService {
         projects.find(project => project.id === +id));
   }
 
-  getLogs(projectId, branch) {
+  getLogs(projectId, branch, rev, skip) {
     const url = `${baseHref}api/projects/${projectId}/logs`;
-    return this.http.get(url, { params: new HttpParams().set('branch', branch) });
+    let params = new HttpParams();
+    params = params.append('branch', branch);
+    if (rev) { params = params.append('rev', rev); }
+    if (skip) { params = params.append('skip', skip); }
+    return this.http.get(url, { params });
   }
 
   getDiff(projectId, hash) {

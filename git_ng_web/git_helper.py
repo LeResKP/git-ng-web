@@ -64,53 +64,6 @@ class Git(object):
         if branches['local_branches']:
             return branches['local_branches'][0]
 
-    def get_logs(self, branch):
-        separator = u'\x00'  # separator added with -z
-        res = self.run(
-            ['git', 'log', '--decorate', '-z',
-             '--date', 'unix',
-             '-n', '50', branch, '--'])
-
-        logs = res.split(separator)
-        dic = defaultdict(list)
-        for log in logs:
-            lis = log.split('\n')
-            hashes = lis[0].split(' ')
-            h = hashes[1]
-            labels = []
-            label_line = ' '.join(hashes[2:]).strip().strip('(').strip(')')
-            for label in label_line.split(','):
-                labels.append(label.strip())
-            author_name, author_email = parseaddr(
-                ' '.join(lis[1].split(' ')[1:]))
-
-            messages = lis[3:]
-            short_message = ''
-            for msg in messages:
-                if msg.strip():
-                    short_message = msg.strip()
-                    break
-
-            date = datetime.datetime.fromtimestamp(
-                int(' '.join(lis[2].split(' ')[1:])))
-
-            dic[date.date()].append({
-                'hash': h,
-                'short_hash': h[:7],
-                'author': {
-                    'name': author_name,
-                    'email': author_email,
-                },
-                'date': date,
-                'short_message': short_message,
-                'message': '\n'.join(messages),
-                'labels': labels,
-            })
-
-        return [t for t in sorted(dic.items(),
-                                  key=lambda(k, v): k, reverse=True)]
-
-
     def _get_file_content_by_lines(self, filename, h):
         """Get the file content at revision
         """

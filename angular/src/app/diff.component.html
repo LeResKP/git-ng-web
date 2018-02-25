@@ -1,3 +1,7 @@
+<div class="clearfix">
+  <a class="btn btn-default btn-sm float-right" (click)="close()"><i class="far fa-window-close"></i> Close diff</a>
+</div>
+
 <div *ngIf="data$ | async as data">
   <pre>{{data.info}}</pre>
   <div *ngFor="let d of data.diffs" class="card mb-4">

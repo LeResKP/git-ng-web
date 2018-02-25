@@ -14,6 +14,7 @@ requires = [
     'pyramid_mako',
     'pyramid_debugtoolbar',
     'waitress',
+    'gitpython',
 ]
 
 tests_require = [

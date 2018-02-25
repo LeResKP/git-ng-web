@@ -7,12 +7,12 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 
 import { AppComponent } from './app.component';
-import { DiffComponent } from './diff.component';
 import { GitService } from './git.service';
 import { LogListComponent } from './logs/log-list.component';
 import { LogsModule } from './logs/logs.module';
 import { MainComponent, RedirectBranchComponent } from './main.component';
 import { SelectorComponent } from './selector.component';
+import { CommitComponent } from './commit.component';
 
 
 const appRoutes: Routes = [
@@ -28,10 +28,13 @@ const appRoutes: Routes = [
       {
         path: 'b/:branch/commits',
         component: LogListComponent,
-      },
-      {
-        path: 'b/:branch/commits/:hash',
-        component: LogListComponent,
+        children: [
+          {
+            path: 'h/:hash',
+            component: CommitComponent,
+            outlet: 'commit',
+          },
+        ]
       },
     ]
   },
@@ -44,6 +47,7 @@ const appRoutes: Routes = [
     MainComponent,
     RedirectBranchComponent,
     SelectorComponent,
+    CommitComponent,
   ],
   imports: [
     BrowserModule,
