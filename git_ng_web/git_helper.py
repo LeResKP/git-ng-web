@@ -1,5 +1,6 @@
 from collections import defaultdict
 import datetime
+from git import Repo
 import subprocess
 from email.utils import parseaddr
 
@@ -16,6 +17,7 @@ class Git(object):
 
     def __init__(self, repo_path):
         self.repo_path = repo_path
+        self.repo = Repo(repo_path)
 
     def run(self, cmd):
         git = subprocess.Popen(
@@ -26,43 +28,30 @@ class Git(object):
         stdout, stderr = git.communicate()
         return stdout.decode('utf-8', 'ignore')
 
-    def get_branches(self):
-        res = self.run(['git', 'branch', '-a'])
-        lbranches = []
-        rbranches = []
-
-        for line in res.split('\n'):
-            if not line:
-                continue
-            line = line[2:]
-            if line.startswith('(HEAD'):
-                # We are not on a real branch
-                continue
-            if line.startswith('remotes/origin/HEAD'):
-                continue
-            if line.startswith('remotes/'):
-                rbranches.append(line.replace('remotes/', ''))
-            else:
-                lbranches.append(line)
-
+    def get_branch_names(self):
         return {
-            'local_branches': lbranches,
-            'remote_branches': rbranches,
+            'local': [b.name for b in self.repo.branches],
+            'remote': [b.name for b in self.repo.remotes.origin.refs],
+            'default': self.get_default_branch_name(),
         }
 
-    def get_current_branch(self):
-        res = self.run(['git', 'branch', '-a'])
-        for line in res.split('\n'):
-            if not line:
-                continue
-            if line.startswith('*'):
-                if line.startswith('* (HEAD'):
-                    # We are not on a real branch
-                    break
-                return line[2:]
-        branches = self.get_branches()
-        if branches['local_branches']:
-            return branches['local_branches'][0]
+    def exist_branch(self, branch):
+        branches = self.repo.branches + self.repo.remotes.origin.refs
+        return branch in [b.name for b in branches]
+
+    def get_default_branch_name(self):
+        try:
+            return self.repo.active_branch.name
+        except TypeError:
+            # Raised when the branch is detached
+            pass
+        branches = ['master', 'develop']
+        names = [b.name for b in self.repo.branches]
+        for b in branches:
+            if b in names:
+                return b
+
+        return self.repo.branches[0].name
 
     def _get_file_content_by_lines(self, filename, h):
         """Get the file content at revision

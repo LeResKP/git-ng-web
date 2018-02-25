@@ -39,14 +39,14 @@ export class MainComponent implements OnInit {
           this.gitService.getProject(params.get('id')))
         .subscribe(project => {
           this.branchChoices = [];
-          project.local_branches.map(branch => {
+          project.branches.local.map(branch => {
             this.branchChoices.push({
               label: branch,
               routerLink: ['/p', project.id, 'b', branch, 'commits'],
             });
           });
 
-          project.remote_branches.map(branch => {
+          project.branches.remote.map(branch => {
             this.branchChoices.push({
               label: branch,
               routerLink: ['/p', project.id, 'b', branch, 'commits'],
@@ -81,7 +81,7 @@ export class RedirectBranchComponent implements OnDestroy, OnInit {
         .switchMap((params: ParamMap) =>
           this.gitService.getProject(projectId))
         .subscribe(project => {
-          this.router.navigate(['/p', projectId, 'b', project.current_branch || project.local_branches[0], 'commits']);
+          this.router.navigate(['/p', projectId, 'b', project.branches.default, 'commits']);
         });
   }
 

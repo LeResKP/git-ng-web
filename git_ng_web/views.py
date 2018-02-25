@@ -43,15 +43,11 @@ def projects(request):
     lis = get_projects_from_settings(request)
     for project in lis:
         gitobj = git.Git(project['path'])
-        dic = {
+        data.append({
             'id': project['id'],
             'name': project['name'],
-            'current_branch': gitobj.get_current_branch(),
-        }
-        dic.update(gitobj.get_branches())
-
-        data.append(dic)
-
+            'branches': gitobj.get_branch_names(),
+        })
     return data
 
 
@@ -71,8 +67,7 @@ def logs(request):
         raise Exception('TODO')
 
     gitobj = git.Git(project['path'])
-    branches = gitobj.get_branches()
-    if branch not in sum(branches.values(), []):
+    if not gitobj.exist_branch(branch):
         raise Exception('TODO')
 
     def get_branches(commit):
