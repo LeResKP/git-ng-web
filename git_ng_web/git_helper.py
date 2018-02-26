@@ -53,6 +53,49 @@ class Git(object):
 
         return self.repo.branches[0].name
 
+    def get_logs(self, branch, rev, skip):
+        NB_COMMIT = 50
+
+        def get_branches(commit):
+            brs = []
+            for br in self.repo.branches + self.repo.remotes.origin.refs:
+                if br.commit == commit:
+                    brs.append(br.name)
+            return brs
+
+        last = None
+        first = None
+        commits_by_date = defaultdict(list)
+        for commit in self.repo.iter_commits(rev or branch,
+                                             max_count=NB_COMMIT, skip=skip):
+            last = commit
+            first = commit if first is None else first
+            commits_by_date[commit.committed_datetime.date()].append({
+                'hash': commit.hexsha,
+                'short_hash': commit.hexsha[:7],
+                'summary': commit.summary,
+                'author': {
+                    'name': commit.author.name,
+                    'email': commit.author.email,
+                },
+                'date': commit.committed_datetime,
+                'stats': [{'filename': f, 'data': d}
+                          for f, d in commit.stats.files.items()],
+                'branches': get_branches(commit)
+            })
+
+        logs = [t for t in sorted(commits_by_date.items(),
+                                  key=lambda(k, v): k, reverse=True)]
+
+        newer = skip - NB_COMMIT
+        skip += NB_COMMIT
+        return {
+            'logs': logs,
+            'rev': rev or first.hexsha,
+            'skip_older': skip if last.parents else None,
+            'skip_newer': newer if newer >= 0 else None,
+        }
+
     def _get_file_content_by_lines(self, filename, h):
         """Get the file content at revision
         """
