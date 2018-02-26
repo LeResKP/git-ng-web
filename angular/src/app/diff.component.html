@@ -3,7 +3,23 @@
 </div>
 
 <div *ngIf="data$ | async as data">
-  <pre>{{data.info}}</pre>
+  <div class="commit-message alert alert-info">{{data.commit.message}}</div>
+  <div>
+    <div class="clearfix small">
+      <div class="float-left">{{data.commit.author.name || data.commit.author.email}} on {{data.commit.date | date: 'short'}}</div>
+      <div class="float-right">{{data.commit.short_hash}}</div>
+    </div>
+    <div class="small">
+      <span *ngFor="let branch of data.commit.branches" class="badge badge-secondary mr-2">{{branch}}</span>
+    </div>
+    <div class="small">
+      {{data.commit.stats.total.files}} changed <ng-template [ngIf]="data.commit.stats.total.files != 1">files</ng-template><ng-template [ngIf]="data.commit.stats.total.files == 1"></ng-template>
+      <span class="color-added">+ {{data.commit.stats.total.insertions}}</span> <span class="color-deleted">- {{data.commit.stats.total.deletions}}</span>
+    </div>
+    <ul class="small list-unstyled stats">
+      <li *ngFor="let stat of data.commit.stats.files">{{stat.filename}} <span class="color-added">+ {{stat.data.insertions}}</span> <span class="color-deleted">- {{stat.data.deletions}}</span></li>
+    </ul>
+  </div>
   <div *ngFor="let d of data.diffs" class="card mb-4">
     <div class="card-body">
       <div class="card-title">{{d.title}}</div>

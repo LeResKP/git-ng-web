@@ -30,8 +30,8 @@ import { GitService } from '../git.service';
                     </div>
                   </a>
                   <ng-template [ngIf]="!hash && details">
-                  <ul *ngFor="let stat of log.stats" class="small list-unstyled stats">
-                    <li>{{stat.filename}} <span class="color-added">+ {{stat.data.insertions}}</span> <span class="color-deleted">- {{stat.data.deletions}}</span></li>
+                  <ul class="small list-unstyled stats">
+                    <li *ngFor="let stat of log.stats.files">{{stat.filename}} <span class="color-added">+ {{stat.data.insertions}}</span> <span class="color-deleted">- {{stat.data.deletions}}</span></li>
                   </ul>
                   </ng-template>
                 </li>

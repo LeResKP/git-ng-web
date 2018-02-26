@@ -53,8 +53,7 @@ class Git(object):
 
         return self.repo.branches[0].name
 
-    def get_logs(self, branch, rev, skip):
-        NB_COMMIT = 50
+    def commit_to_json(self, commit):
 
         def get_branches(commit):
             brs = []
@@ -63,6 +62,27 @@ class Git(object):
                     brs.append(br.name)
             return brs
 
+        return {
+            'hash': commit.hexsha,
+            'short_hash': commit.hexsha[:7],
+            'summary': commit.summary,
+            'message': commit.message,
+            'author': {
+                'name': commit.author.name,
+                'email': commit.author.email,
+            },
+            'date': commit.committed_datetime,
+            'stats': {
+                'files': [{'filename': f, 'data': d}
+                          for f, d in commit.stats.files.items()],
+                'total': commit.stats.total,
+            },
+            'branches': get_branches(commit)
+        }
+
+    def get_logs(self, branch, rev, skip):
+        NB_COMMIT = 50
+
         last = None
         first = None
         commits_by_date = defaultdict(list)
@@ -70,20 +90,8 @@ class Git(object):
                                              max_count=NB_COMMIT, skip=skip):
             last = commit
             first = commit if first is None else first
-            commits_by_date[commit.committed_datetime.date()].append({
-                'hash': commit.hexsha,
-                'short_hash': commit.hexsha[:7],
-                'summary': commit.summary,
-                'author': {
-                    'name': commit.author.name,
-                    'email': commit.author.email,
-                },
-                'date': commit.committed_datetime,
-                'stats': [{'filename': f, 'data': d}
-                          for f, d in commit.stats.files.items()],
-                'branches': get_branches(commit)
-            })
-
+            commits_by_date[commit.committed_datetime.date()].append(
+                self.commit_to_json(commit))
         logs = [t for t in sorted(commits_by_date.items(),
                                   key=lambda(k, v): k, reverse=True)]
 
@@ -240,7 +248,8 @@ class Git(object):
                 'lines': lines,
             })
 
+        commit = self.repo.commit(h)
         return {
-            'info': info,
+            'commit': self.commit_to_json(commit),
             'diffs': lis
         }

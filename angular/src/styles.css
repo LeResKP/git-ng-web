@@ -85,3 +85,7 @@ a.nostyle:hover {
 .stats {
   margin-top: 5px;
 }
+
+.commit-message {
+  white-space: pre;
+}
