@@ -1,8 +1,5 @@
 from collections import defaultdict
-import datetime
-from git import Repo
-import subprocess
-from email.utils import parseaddr
+from git import Repo, NULL_TREE
 
 
 # These constant values are used in angular
@@ -18,15 +15,6 @@ class Git(object):
     def __init__(self, repo_path):
         self.repo_path = repo_path
         self.repo = Repo(repo_path)
-
-    def run(self, cmd):
-        git = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            cwd=self.repo_path)
-        stdout, stderr = git.communicate()
-        return stdout.decode('utf-8', 'ignore')
 
     def get_branch_names(self):
         return {
@@ -53,7 +41,7 @@ class Git(object):
 
         return self.repo.branches[0].name
 
-    def commit_to_json(self, commit):
+    def commit_to_json(self, commit, stat):
 
         def get_branches(commit):
             brs = []
@@ -62,7 +50,7 @@ class Git(object):
                     brs.append(br.name)
             return brs
 
-        return {
+        dic = {
             'hash': commit.hexsha,
             'short_hash': commit.hexsha[:7],
             'summary': commit.summary,
@@ -72,13 +60,16 @@ class Git(object):
                 'email': commit.author.email,
             },
             'date': commit.committed_datetime,
-            'stats': {
+            'branches': get_branches(commit)
+        }
+
+        if stat:
+            dic['stats'] = {
                 'files': [{'filename': f, 'data': d}
                           for f, d in commit.stats.files.items()],
                 'total': commit.stats.total,
-            },
-            'branches': get_branches(commit)
-        }
+            }
+        return dic
 
     def get_logs(self, branch, rev, skip):
         NB_COMMIT = 50
@@ -91,7 +82,7 @@ class Git(object):
             last = commit
             first = commit if first is None else first
             commits_by_date[commit.committed_datetime.date()].append(
-                self.commit_to_json(commit))
+                self.commit_to_json(commit, stat=False))
         logs = [t for t in sorted(commits_by_date.items(),
                                   key=lambda(k, v): k, reverse=True)]
 
@@ -107,43 +98,24 @@ class Git(object):
     def _get_file_content_by_lines(self, filename, h):
         """Get the file content at revision
         """
-        res = self.run(['git', 'show', '%s:%s' % (h, filename)])
+        res = self.repo.git.show('%s:%s' % (h, filename))
         content_by_lines = {}
         for index, line in enumerate(res.split('\n'), start=1):
             content_by_lines[index] = line
 
         return content_by_lines
 
-    def _get_filenames_and_content_from_patch(self, patch):
-        after_filename = None
-        before_filename = None
-        content = []
-        for line in patch.strip('\n').split('\n'):
-            # TODO: when only renamed we have
-            # rename from file
-            # rename to newfile
-            if line.startswith('+++'):
-                after_filename = line[4:]
-                continue
-            if line.startswith('---'):
-                before_filename = line[4:]
-                continue
-            if after_filename:
-                content.append(line)
-        return before_filename, after_filename, '\n'.join(content)
-
-    def _get_diff_lines(self, h, patch):
-        (before_filename,
-         after_filename,
-         content) = self._get_filenames_and_content_from_patch(patch)
-        # TODO: /dev/null
-        content_by_lines = self._get_file_content_by_lines(after_filename, h)
+    def _get_diff_lines(self, h, after_filename, content, full_diff):
+        content_by_lines = []
+        if full_diff:
+            content_by_lines = self._get_file_content_by_lines(
+                after_filename, h)
 
         lines = []
         current_line = 1
 
         if not content:
-            return before_filename, after_filename, []
+            return []
 
         # NOTE: Create a class to be able to update value in closure
         class counter(object):
@@ -170,7 +142,13 @@ class Git(object):
                     'lines': sublines,
                 })
 
-        for line in content.split('\n'):
+        lis = content.split('\n')
+        for index, line in enumerate(lis):
+            if index == (len(lis) - 1):
+                # We should always have an empty line at last
+                if line != '':
+                    raise
+                continue
             if line.startswith('@@'):
                 # We need to insert the lines before
                 # @@ -18,6 +18,7 @@ def main(global_config, **settings):
@@ -221,35 +199,58 @@ class Git(object):
                 'content': line,
             })
 
-        add_hidden_lines(current_line, len(content_by_lines))
-        return before_filename, after_filename, lines
+        add_hidden_lines(current_line, len(content_by_lines) + 1)
+        return lines
 
     def get_diff(self, h):
-        res = self.run(['git', 'show', '--no-prefix', h])
-        parts = res.split('diff --git')
-        info = parts.pop(0)
+        commit = self.repo.commit(h)
 
-        lis = []
-        for part in parts:
-            (before_filename,
-             after_filename,
-             lines) = self._get_diff_lines(h, part)
-
-            if before_filename == after_filename:
-                title = after_filename
-            elif before_filename == '/dev/null':
-                title =  'New file %s' % after_filename
-            elif after_filename == '/dev/null':
-                title =  'Delete file %s' % before_filename
+        def cmd(create_patch):
+            if commit.parents:
+                assert len(commit.parents) == 1
+                return commit.parents[0].diff(
+                    commit, create_patch=create_patch)
             else:
-                title = 'Rename %s -> %s' % (before_filename, after_filename)
-            lis.append({
+                return commit.diff(NULL_TREE, create_patch=create_patch)
+
+        # THe change_type and files information are returns when create_patch
+        # is False
+        diffs = cmd(create_patch=False)
+        diff_with_patches = cmd(create_patch=True)
+
+        new_lis = []
+        path = None
+        for index, (diff, diff_patch) in enumerate(zip(diffs, diff_with_patches)):
+            if diff.change_type == 'A':
+                title = 'New file %s' % diff.b_path
+                path = diff.b_path
+            elif diff.change_type == 'D':
+                title = 'Delete file %s' % diff.a_path
+                path = diff.a_path
+            elif diff.change_type == 'R':
+                title = 'Rename %s -> %s' % (diff.a_path, diff.b_path)
+                path = diff.b_path
+            elif diff.change_type == 'M':
+                assert diff.a_path == diff.b_path
+                title = diff.b_path
+                path = diff.b_path
+            else:
+                raise ValueError(
+                    'change type %s is not supported in commit %s' % (
+                        diff.change_type, h,
+                    )
+                )
+
+            full_diff = diff.change_type not in ('A', 'D')
+            lines = self._get_diff_lines(h, path, diff_patch.diff,
+                                         full_diff=full_diff)
+
+            new_lis.append({
                 'title': title,
                 'lines': lines,
             })
 
-        commit = self.repo.commit(h)
         return {
-            'commit': self.commit_to_json(commit),
-            'diffs': lis
+            'commit': self.commit_to_json(commit, stat=True),
+            'diffs': new_lis
         }
