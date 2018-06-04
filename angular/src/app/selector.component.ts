@@ -24,7 +24,7 @@ export interface SelectorChoice {
 export class SelectorComponent implements AfterViewInit, OnDestroy {
   @Input() label: string;
   @Input() choices: SelectorChoice[];
-  private choice: string;
+  public choice: string;
 
   private subscription: Subscription;
   private linksSubscription: Subscription;
