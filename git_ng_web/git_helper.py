@@ -82,7 +82,7 @@ class Git(object):
             last = commit
             first = commit if first is None else first
             commits_by_date[commit.committed_datetime.date()].append(
-                self.commit_to_json(commit, stat=False))
+                self.commit_to_json(commit, stat=True))
         logs = [t for t in sorted(commits_by_date.items(),
                                   key=lambda(k, v): k, reverse=True)]
 
