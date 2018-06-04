@@ -207,7 +207,8 @@ class Git(object):
 
         def cmd(create_patch):
             if commit.parents:
-                assert len(commit.parents) == 1
+                # When it's a merge commit we have 2 parents.
+                assert len(commit.parents) < 3
                 return commit.parents[0].diff(
                     commit, create_patch=create_patch)
             else:
