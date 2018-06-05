@@ -3,10 +3,13 @@
 </div>
 
 <div *ngIf="data$ | async as data">
-  <div class="commit-message alert alert-info">{{data.commit.message}}</div>
+  <div class="alert alert-info">
+    <div>{{data.commit.summary}}</div>
+    <div class="small pre commit-message" *ngIf="data.commit.message">{{data.commit.message}}</div>
+  </div>
   <div>
     <div class="clearfix small">
-      <div class="float-left">{{data.commit.author.name || data.commit.author.email}} on {{data.commit.date | date: 'short'}}</div>
+      <div class="float-left">{{data.commit.author.name || data.commit.author.email}} commited on {{data.commit.date | date: 'short'}}</div>
       <div class="float-right">{{data.commit.short_hash}}</div>
     </div>
     <div class="small">

@@ -87,5 +87,5 @@ a.nostyle:hover {
 }
 
 .commit-message {
-  white-space: pre;
+  margin-top: 10px;
 }

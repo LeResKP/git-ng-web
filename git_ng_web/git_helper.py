@@ -50,11 +50,13 @@ class Git(object):
                     brs.append(br.name)
             return brs
 
+        # Remove the summary from the message
+        message = commit.message[len(commit.summary):].strip()
         dic = {
             'hash': commit.hexsha,
             'short_hash': commit.hexsha[:7],
             'summary': commit.summary,
-            'message': commit.message,
+            'message': message,
             'author': {
                 'name': commit.author.name,
                 'email': commit.author.email,
