@@ -20,6 +20,7 @@ export class CommitComponent implements OnDestroy, OnInit {
     this.data$ = this.route.paramMap
         .switchMap((params: ParamMap) => {
           this.gitService.setCommitHash(params.get('hash'));
+          document.querySelector('.autoscroll-right').scrollTop = 0;
           return this.gitService.getDiff(
             this.route.parent.parent.snapshot.params['id'], params.get('hash'));
         });

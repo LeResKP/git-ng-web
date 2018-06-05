@@ -12,7 +12,7 @@ import { GitService } from '../git.service';
   template: `
   <div class="container-fluid">
     <div class="row app-log-list" *ngIf="logs$ | async as data">
-      <div [class.col-md-4]="hash" [class.col-md-12]="!hash">
+      <div [class.col-md-4]="hash" [class.col-md-12]="!hash" class="autoscroll">
         <a class="btn btn-sm float-right" [class.text-muted]="!details" (click)="details = !details" *ngIf="!hash"><i class="fas fa-list"></i> Details</a>
         <div class="app-log-groups">
           <div *ngFor="let log of data.logs">
@@ -47,7 +47,7 @@ import { GitService } from '../git.service';
         <br>
         <br>
       </div>
-      <div class="col-md-8">
+      <div class="col-md-8 autoscroll autoscroll-right">
         <router-outlet name="commit"></router-outlet>
       </div>
     </div>

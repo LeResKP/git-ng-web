@@ -21,7 +21,6 @@ export class GitService {
 
 
   setCommitHash(hash) {
-    console.log('setCommitHash', hash);
     this.commitHash.next(hash);
   }
 

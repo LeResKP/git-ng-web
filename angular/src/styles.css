@@ -58,7 +58,7 @@ a.nostyle:hover {
   height: calc(100vh - 40px - 30px);
 }
 
-.app-log-list > div {
+.autoscroll {
   overflow: auto;
 }
 
