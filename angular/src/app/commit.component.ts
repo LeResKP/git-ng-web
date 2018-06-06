@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewChecked, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 
 import 'rxjs/add/operator/switchMap';
@@ -10,9 +10,10 @@ import { GitService } from './git.service';
   selector: 'app-commit',
   templateUrl: `./diff.component.html`,
 })
-export class CommitComponent implements OnDestroy, OnInit {
+export class CommitComponent implements OnDestroy, OnInit, AfterViewChecked {
 
   public data$;
+  private filename: string;
 
   constructor(private route: ActivatedRoute, private gitService: GitService, private router: Router) {}
 
@@ -24,6 +25,28 @@ export class CommitComponent implements OnDestroy, OnInit {
           return this.gitService.getDiff(
             this.route.parent.parent.snapshot.params['id'], params.get('hash'));
         });
+
+        this.route.fragment.subscribe((hash: string) => {
+          this.filename = hash ? hash : null;
+          // NOTE: will have no effect after the init, but will scroll when clicking on the link.
+          this.scrollToAnchor();
+        });
+  }
+
+  scrollToAnchor() {
+    if (this.filename) {
+      const elt: HTMLElement = document.getElementById(this.filename);
+      if (elt) {
+        elt.scrollIntoView();
+        this.filename = null;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  ngAfterViewChecked() {
+    this.scrollToAnchor();
   }
 
   expand(line) {

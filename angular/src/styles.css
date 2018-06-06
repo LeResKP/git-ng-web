@@ -89,3 +89,7 @@ a.nostyle:hover {
 .commit-message {
   margin-top: 10px;
 }
+
+.cursor-pointer {
+  cursor: pointer;
+}

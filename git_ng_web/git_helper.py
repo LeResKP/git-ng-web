@@ -249,6 +249,7 @@ class Git(object):
                                          full_diff=full_diff)
 
             new_lis.append({
+                'path': path,
                 'title': title,
                 'lines': lines,
             })
