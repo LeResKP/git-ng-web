@@ -68,7 +68,8 @@ class Git(object):
         if stat:
             dic['stats'] = {
                 'files': [{'filename': f, 'data': d}
-                          for f, d in commit.stats.files.items()],
+                          for f, d in sorted(commit.stats.files.items(),
+                                             key=lambda (k, v): k)],
                 'total': commit.stats.total,
             }
         return dic
