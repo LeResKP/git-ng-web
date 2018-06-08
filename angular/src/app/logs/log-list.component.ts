@@ -11,9 +11,9 @@ import { GitService } from '../git.service';
   selector: 'app-log-list',
   template: `
   <div class="container-fluid">
-    <div class="row app-log-list" *ngIf="logs$ | async as data">
+    <div class="row app-log-list" *ngIf="logs as data">
       <div [class.col-md-4]="hash" [class.col-md-12]="!hash" class="autoscroll">
-        <a class="btn btn-sm float-right" [class.text-muted]="!details" (click)="details = !details" *ngIf="!hash"><i class="fas fa-list"></i> Details</a>
+        <a class="btn btn-sm float-right" [class.text-muted]="!details" (click)="toggleDetails()" *ngIf="!hash"><i class="fas fa-list"></i> Details</a>
         <div class="app-log-groups">
           <div *ngFor="let log of data.logs">
             <div class="log-date small text-secondary"><i class="far fa-clock"></i> {{log[0] | date}}</div>
@@ -30,8 +30,8 @@ import { GitService } from '../git.service';
                     </div>
                   </a>
                   <ng-template [ngIf]="!hash && details">
-                  <ul class="small list-unstyled stats">
-                    <li *ngFor="let stat of log.stats.files">{{stat.filename}} <span class="color-added">+ {{stat.data.insertions}}</span> <span class="color-deleted">- {{stat.data.deletions}}</span></li>
+                  <ul class="small list-unstyled stats" *ngIf="log.stats$ | async as stats">
+                    <li *ngFor="let stat of stats.files">{{stat.filename}} <span class="color-added">+ {{stat.data.insertions}}</span> <span class="color-deleted">- {{stat.data.deletions}}</span></li>
                   </ul>
                   </ng-template>
                 </li>
@@ -60,6 +60,8 @@ export class LogListComponent implements OnInit {
   public projectId: number;
   public hash: string;
   public details = false;
+  public logs: any;
+  private detailsLoaded = false;
 
   constructor(private route: ActivatedRoute, private cdr: ChangeDetectorRef, private gitService: GitService, private router: Router) {}
 
@@ -71,16 +73,31 @@ export class LogListComponent implements OnInit {
       this.route.paramMap, this.route.queryParamMap,
       (params, qparams) => ({params, qparams}));
 
-    this.logs$ = obsCombined.switchMap(ap => this.gitService.getLogs(
+    obsCombined.switchMap(ap => this.gitService.getLogs(
       this.projectId,
       ap.params.get('branch'),
       ap.qparams.get('r'),
       ap.qparams.get('s'))
-    );
+    ).subscribe((logs => {
+      this.logs = logs;
+      this.detailsLoaded = false;
+    }));
 
     this.gitService.commitHash.subscribe((hash: string) => {
       setTimeout(() => this.hash = hash);
     });
+  }
+
+  toggleDetails() {
+    if (!this.detailsLoaded) {
+      this.logs.logs.map(l => {
+        l[1].map(log => {
+          log.stats$ = this.gitService.getLogDetails(this.projectId, log.hash);
+        });
+      });
+      this.detailsLoaded = true;
+    }
+    this.details = ! this.details;
   }
 
 }

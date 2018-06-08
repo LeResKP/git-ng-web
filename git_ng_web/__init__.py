@@ -4,7 +4,6 @@ from pyramid.events import NewRequest
 from pyramid.renderers import JSON
 
 
-
 def add_cors_headers_response_callback(event):
     def cors_headers(request, response):
         response.headers.update({
@@ -36,6 +35,7 @@ def main(global_config, **settings):
     config.add_route('home', '/')
     config.add_route('projects', '/api/projects')
     config.add_route('logs', '/api/projects/:project_id/logs')
+    config.add_route('log_details', '/api/projects/:project_id/logs/:hash')
     config.add_route('diff', '/api/projects/:project_id/diff/:hash')
     config.scan()
     return config.make_wsgi_app()

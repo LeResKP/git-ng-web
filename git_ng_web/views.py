@@ -71,6 +71,20 @@ def logs(request):
     return gitobj.get_logs(branch, rev, skip)
 
 
+@view_config(route_name='log_details', renderer='json')
+def log_details(request):
+    project_id = int(request.matchdict['project_id'])
+    h = request.matchdict['hash']
+    if not h.isalnum():
+        # TODO: validate correctly hash
+        raise Exception('TODO')
+    project = get_project(request, project_id)
+    if not project:
+        raise Exception('TODO')
+    gitobj = git.Git(project['path'])
+    return gitobj.get_log_details(h)
+
+
 @view_config(route_name='diff', renderer='json')
 def diff(request):
     project_id = int(request.matchdict['project_id'])

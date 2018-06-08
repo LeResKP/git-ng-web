@@ -43,6 +43,11 @@ export class GitService {
     return this.http.get(url, { params });
   }
 
+  getLogDetails(projectId, hash) {
+    const url = `${baseHref}api/projects/${projectId}/logs/${hash}`;
+    return this.http.get(url);
+  }
+
   getDiff(projectId, hash) {
     const url = `${baseHref}api/projects/${projectId}/diff/${hash}`;
     return this.http.get(url);

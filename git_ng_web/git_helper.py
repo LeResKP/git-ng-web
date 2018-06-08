@@ -84,7 +84,7 @@ class Git(object):
             last = commit
             first = commit if first is None else first
             commits_by_date[commit.committed_datetime.date()].append(
-                self.commit_to_json(commit, stat=True))
+                self.commit_to_json(commit, stat=False))
         logs = [t for t in sorted(commits_by_date.items(),
                                   key=lambda(k, v): k, reverse=True)]
 
@@ -95,6 +95,14 @@ class Git(object):
             'rev': rev or first.hexsha,
             'skip_older': skip if last.parents else None,
             'skip_newer': newer if newer >= 0 else None,
+        }
+
+    def get_log_details(self, h):
+        commit = self.repo.commit(h)
+        return {
+            'files': [{'filename': f, 'data': d}
+                      for f, d in commit.stats.files.items()],
+            'total': commit.stats.total,
         }
 
     def _get_file_content_by_lines(self, filename, h):
