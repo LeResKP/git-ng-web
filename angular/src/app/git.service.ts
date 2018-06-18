@@ -52,4 +52,9 @@ export class GitService {
     const url = `${baseHref}api/projects/${projectId}/diff/${hash}`;
     return this.http.get(url);
   }
+
+  getContextDiff(projectId, hash, path, data) {
+    const url = `${baseHref}api/projects/${projectId}/diff/${hash}/context`;
+    return this.http.post(url, { path, data });
+  }
 }

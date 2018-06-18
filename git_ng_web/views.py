@@ -97,3 +97,28 @@ def diff(request):
         raise Exception('TODO')
     gitobj = git.Git(project['path'])
     return gitobj.get_diff(h)
+
+
+@view_config(route_name='opt', renderer='json')
+def opt(request):
+    return {}
+
+
+@view_config(route_name='diff_context', renderer='json')
+def diff_context(request):
+    project_id = int(request.matchdict['project_id'])
+    h = request.matchdict['hash']
+    if not h.isalnum():
+        # TODO: validate correctly hash
+        raise Exception('TODO')
+    project = get_project(request, project_id)
+    if not project:
+        raise Exception('TODO')
+    gitobj = git.Git(project['path'])
+
+    # TODO: validation
+    filename = request.json_body['path']
+    return gitobj.get_diff_context(
+        filename, h,
+        **request.json_body['data']
+    )

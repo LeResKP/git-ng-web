@@ -6,8 +6,139 @@ from git import Repo, NULL_TREE
 DIFF_LINE_TYPE_ADDED = 'added'
 DIFF_LINE_TYPE_DELETED = 'deleted'
 DIFF_LINE_TYPE_CONTEXT = 'context'
+DIFF_LINE_TYPE_EXTRA_CONTEXT = 'extra'
 DIFF_LINE_TYPE_EXPAND = 'expand'
 DIFF_LINE_TYPE_HIDDEN = 'hidden'
+
+DIFF_CONTEXT_LINE = 20
+
+
+def get_line_number_hunk(s):
+    lis = s[1:].split(',')
+    line_number = int(lis[0])
+    if len(lis) == 2:
+        hunk_size = int(lis[1])
+    elif len(lis) == 1:
+        # @@ -0,0 +1 @@
+        hunk_size = 1
+    else:
+        raise Exception('TODO')
+
+    return line_number, hunk_size
+
+
+def parse_hunk_title(line):
+    # @@ -18,6 +18,7 @@ def main(global_config, **settings):
+    before, after = line.split('@@')[1].strip().split(' ')
+    assert(before.startswith('-'))
+    assert(after.startswith('+'))
+    a_line_num, a_hunk_size = get_line_number_hunk(before)
+    b_line_num, b_hunk_size = get_line_number_hunk(after)
+    return {
+        'a_line_num': a_line_num,
+        'a_hunk_size': a_hunk_size,
+        'b_line_num': b_line_num,
+        'b_hunk_size': b_hunk_size,
+    }
+
+
+def _get_missing_lines(b_line_num, prev_b_line_num, file_length):
+
+    if prev_b_line_num is not None:
+        start = max(prev_b_line_num + 1, b_line_num - DIFF_CONTEXT_LINE)
+        end = b_line_num
+    else:
+        start = b_line_num
+        end = min(start + DIFF_CONTEXT_LINE, file_length + 1)
+
+    return range(start, end)
+
+
+def _parse_patch(content, nb_lines):
+    if not content:
+        return []
+
+    lines = []
+    last_separator = None
+
+    a_line_num = 1
+    b_line_num = 1
+
+    lis = content.split('\n')
+    # Make sure the end of patch is correct
+    assert lis[-1] == ''
+
+    for line in lis[:-1]:
+        if line.startswith('@@'):
+            data = parse_hunk_title(line)
+            if data['b_line_num'] == 1:
+                continue
+
+            if last_separator:
+                data['prev_b_line_num'] = (
+                    last_separator['b_line_num'] +
+                    last_separator['b_hunk_size'] - 1
+                )
+            else:
+                data['prev_b_line_num'] = 0
+
+            a_line_num = data['a_line_num']
+            b_line_num = data['b_line_num']
+            if b_line_num > 1:
+                lines.append({
+                    'type': DIFF_LINE_TYPE_EXPAND,
+                    'a_line_num': None,
+                    'b_line_num': None,
+                    'content': line,
+                    'context_data': data,
+                })
+
+            last_separator = data
+
+        elif line.startswith('+'):
+            lines.append({
+                'type': DIFF_LINE_TYPE_ADDED,
+                'a_line_num': None,
+                'b_line_num': b_line_num,
+                'content': line,
+            })
+            b_line_num += 1
+
+        elif line.startswith('-'):
+            lines.append({
+                'type': DIFF_LINE_TYPE_DELETED,
+                'a_line_num': a_line_num,
+                'b_line_num': None,
+                'content': line,
+            })
+            a_line_num += 1
+
+        else:
+            lines.append({
+                'type': DIFF_LINE_TYPE_CONTEXT,
+                'a_line_num': a_line_num,
+                'b_line_num': b_line_num,
+                'content': line,
+            })
+            a_line_num += 1
+            b_line_num += 1
+
+    if b_line_num > 1 and b_line_num < nb_lines:
+        lines.append({
+            'type': DIFF_LINE_TYPE_EXPAND,
+            'b_line_num': None,
+            'a_line_num': None,
+            'content': '',
+            'context_data': {
+                'a_line_num': a_line_num,
+                'b_line_num': b_line_num,
+                'a_hunk_size': None,
+                'b_hunk_size': None,
+                'prev_b_line_num': None,
+            },
+        })
+
+    return lines
 
 
 class Git(object):
@@ -122,95 +253,70 @@ class Git(object):
             content_by_lines = self._get_file_content_by_lines(
                 after_filename, h)
 
-        lines = []
-        current_line = 1
+        nb_lines = len(content_by_lines)
+        return _parse_patch(content, nb_lines)
 
-        if not content:
+    def get_diff_context(self, filename, h,
+                         a_line_num, a_hunk_size,
+                         b_line_num, b_hunk_size,
+                         prev_b_line_num):
+
+        content_by_lines = self._get_file_content_by_lines(
+            filename, h)
+
+        line_numbers = _get_missing_lines(
+            b_line_num, prev_b_line_num, len(content_by_lines))
+
+        if not line_numbers:
             return []
 
-        # NOTE: Create a class to be able to update value in closure
-        class counter(object):
-            before_line = 0
-            after_line = 0
+        lines = []
 
-        def add_hidden_lines(start, end):
-            sublines = []
-            for nb in range(start, end):
-                counter.after_line += 1
-                counter.before_line += 1
-                sublines.append({
-                    'type': DIFF_LINE_TYPE_HIDDEN,
-                    'after_line': counter.after_line,
-                    'before_line': counter.before_line,
-                    'content': ' %s' % content_by_lines[nb]
-                })
-            if sublines:
-                lines.append({
-                    'type': DIFF_LINE_TYPE_EXPAND,
-                    'after_line': None,
-                    'before_line': None,
-                    'content': line,
-                    'lines': sublines,
-                })
-
-        lis = content.split('\n')
-        for index, line in enumerate(lis):
-            if index == (len(lis) - 1):
-                # We should always have an empty line at last
-                if line != '':
-                    raise
-                continue
-            if line.startswith('@@'):
-                # We need to insert the lines before
-                # @@ -18,6 +18,7 @@ def main(global_config, **settings):
-                # we want to get +18,7
-                after = line.split('@@')[1].strip().split(' ')[1]
-                assert(after.startswith('+'))
-                after = after[1:]
-                split = after.split(',')
-                start_patch_line = int(split[0])
-                if len(split) == 2:
-                    patch_line = int(after.split(',')[1])
-                elif len(split) == 1:
-                    # @@ -0,0 +1 @@
-                    patch_line = 1
-                else:
-                    raise Exception('TODO')
-                add_hidden_lines(current_line, start_patch_line)
-                # start_patch_line & patch_line can be 0 when deleting a file
-                current_line = (start_patch_line + patch_line) or 1
-                continue
-
-            if line.startswith('+'):
-                counter.after_line += 1
-                lines.append({
-                    'type': DIFF_LINE_TYPE_ADDED,
-                    'after_line': counter.after_line,
-                    'before_line': None,
-                    'content': line,
-                })
-                continue
-
-            if line.startswith('-'):
-                counter.before_line += 1
-                lines.append({
-                    'type': DIFF_LINE_TYPE_DELETED,
-                    'after_line': None,
-                    'before_line': counter.before_line,
-                    'content': line,
-                })
-                continue
-
-            counter.after_line += 1
-            counter.before_line += 1
+        if (prev_b_line_num is not None and
+                line_numbers[0] > prev_b_line_num + 1):
             lines.append({
-                'type': DIFF_LINE_TYPE_CONTEXT,
-                'after_line': counter.after_line,
-                'before_line': counter.before_line,
-                'content': line,
+                'type': DIFF_LINE_TYPE_EXPAND,
+                'a_line_num': None,
+                'b_line_num': None,
+                'content': '@@ -%i,%i +%i,%i @@ %s' % (
+                    a_line_num - DIFF_CONTEXT_LINE,
+                    a_hunk_size + DIFF_CONTEXT_LINE,
+                    b_line_num - DIFF_CONTEXT_LINE,
+                    b_hunk_size + DIFF_CONTEXT_LINE,
+                    content_by_lines[line_numbers[0] - 1]
+                ),
+                'context_data': {
+                    'a_line_num': a_line_num - DIFF_CONTEXT_LINE,
+                    'b_line_num': b_line_num - DIFF_CONTEXT_LINE,
+                    'a_hunk_size': a_hunk_size + DIFF_CONTEXT_LINE,
+                    'b_hunk_size': b_hunk_size + DIFF_CONTEXT_LINE,
+                    'prev_b_line_num': prev_b_line_num,
+                }
             })
 
-        add_hidden_lines(current_line, len(content_by_lines) + 1)
+        for n in line_numbers:
+            lines.append({
+                'type': DIFF_LINE_TYPE_EXTRA_CONTEXT,
+                'a_line_num': n - (b_line_num - a_line_num),
+                'b_line_num': n,
+                'content': ' %s' % content_by_lines[n]
+            })
+
+        if (prev_b_line_num is None and
+                line_numbers[-1] < len(content_by_lines)):
+            lines.append({
+                'type': DIFF_LINE_TYPE_EXPAND,
+                'a_line_num': None,
+                'b_line_num': None,
+                'content': '',
+                'context_data': {
+                    'a_line_num': lines[-1]['a_line_num'] + 1,
+                    'b_line_num': lines[-1]['b_line_num'] + 1,
+                    'a_hunk_size': None,
+                    'b_hunk_size': None,
+                    'prev_b_line_num': None,
+                }
+            })
         return lines
 
     def get_diff(self, h):

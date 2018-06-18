@@ -12,18 +12,25 @@ import { GitService } from './git.service';
 })
 export class CommitComponent implements OnDestroy, OnInit, AfterViewChecked {
 
-  public data$;
+  public data;
+  private projectId;
+  private hash;
   private filename: string;
 
   constructor(private route: ActivatedRoute, private gitService: GitService, private router: Router) {}
 
   ngOnInit() {
-    this.data$ = this.route.paramMap
+    this.route.paramMap
         .switchMap((params: ParamMap) => {
           this.gitService.setCommitHash(params.get('hash'));
           document.querySelector('.autoscroll-right').scrollTop = 0;
+          this.projectId = this.route.parent.parent.snapshot.params['id'];
+          this.hash = params.get('hash');
           return this.gitService.getDiff(
-            this.route.parent.parent.snapshot.params['id'], params.get('hash'));
+            this.projectId, this.hash);
+        }).subscribe(data => {
+          console.log('subscribe', data);
+          this.data = data;
         });
 
         this.route.fragment.subscribe((hash: string) => {
@@ -49,9 +56,13 @@ export class CommitComponent implements OnDestroy, OnInit, AfterViewChecked {
     this.scrollToAnchor();
   }
 
-  expand(line) {
-    line.lines.map(l => l.type = 'context');
-    line.type = 'hidden';
+  expand(line, path, lines, d) {
+    // TODO: we don't need lines and d since d contains lines
+    const index = lines.indexOf(line);
+    this.gitService.getContextDiff(this.projectId, this.hash, path, line['context_data']
+                                  ).subscribe(res => {
+      d.lines.splice(index, 1, ...res as Array<any>);
+    });
     return false;
   }
 

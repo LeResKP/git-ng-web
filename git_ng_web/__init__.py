@@ -37,5 +37,13 @@ def main(global_config, **settings):
     config.add_route('logs', '/api/projects/:project_id/logs')
     config.add_route('log_details', '/api/projects/:project_id/logs/:hash')
     config.add_route('diff', '/api/projects/:project_id/diff/:hash')
+    config.add_route('diff_context',
+                     '/api/projects/:project_id/diff/:hash/context',
+                     request_method='POST')
+
+    # TODO: code OPTIONS properly
+    config.add_route('opt',
+                     '/api/projects/:project_id/diff/:hash/context',
+                     request_method='OPTIONS')
     config.scan()
     return config.make_wsgi_app()
