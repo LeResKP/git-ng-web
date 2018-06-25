@@ -5,7 +5,7 @@
 <div *ngIf="data">
   <div class="alert alert-info">
     <div>{{data.commit.summary}}</div>
-    <div class="small pre commit-message" *ngIf="data.commit.message">{{data.commit.message}}</div>
+    <pre class="small commit-message" *ngIf="data.commit.message">{{data.commit.message}}</pre>
   </div>
   <div>
     <div class="clearfix small">
