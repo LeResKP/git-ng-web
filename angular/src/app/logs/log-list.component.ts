@@ -20,7 +20,7 @@ import { GitService } from '../git.service';
             <div class="log-date small text-secondary"><i class="far fa-clock"></i> {{log[0] | date}}</div>
               <ul class="list-group">
                 <li class="list-group-item" *ngFor="let log of log[1]" [class.active]="hash === log.hash">
-                  <a [routerLink]="[{ outlets: { commit: ['h', log.hash] } }]" queryParamsHandling="preserve" class="nostyle d-block">
+                  <a [routerLink]="[{ outlets: { commit: ['h', log.hash] } }]" queryParamsHandling="preserve" class="nostyle d-block" (click)="showLogs=false">
                     {{log.summary}}
                     <div class="clearfix small">
                       <div class="float-left">{{log.author.name || log.author.email}}</div>
