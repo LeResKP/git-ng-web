@@ -22,6 +22,7 @@ export class CommitComponent implements OnDestroy, OnInit, AfterViewChecked {
   ngOnInit() {
     this.route.paramMap
         .switchMap((params: ParamMap) => {
+          this.data = null;
           this.gitService.setCommitHash(params.get('hash'));
           document.querySelector('.autoscroll-right').scrollTop = 0;
           this.projectId = this.route.parent.parent.snapshot.params['id'];

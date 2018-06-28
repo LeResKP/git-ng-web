@@ -1,8 +1,12 @@
-<div class="clearfix">
-  <a class="btn btn-default btn-sm float-right" (click)="close()"><i class="far fa-window-close"></i> Close diff</a>
+<div *ngIf="!data" class="loading">
+  <i class="fas fa-spinner fa-spin fa-2x"></i>
 </div>
 
 <div *ngIf="data">
+  <div class="clearfix">
+    <a class="btn btn-default btn-sm float-right" (click)="close()"><i class="far fa-window-close"></i> Close diff</a>
+  </div>
+
   <div class="alert alert-info">
     <div>{{data.commit.summary}}</div>
     <pre class="small commit-message" *ngIf="data.commit.message">{{data.commit.message}}</pre>

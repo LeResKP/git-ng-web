@@ -117,3 +117,8 @@ a.nostyle:hover {
   transform: translate(0);
   transition:  transform 0.5s ease;
 }
+
+.loading {
+  text-align: center;
+  padding-top: 200px;
+}
