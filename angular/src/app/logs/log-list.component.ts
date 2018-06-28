@@ -13,6 +13,7 @@ import { GitService } from '../git.service';
   <div class="container-fluid">
     <div class="row app-log-list" *ngIf="logs as data">
       <div [class.sidebar]="hash" [class.col-md-12]="!hash" class="autoscroll" [class.hide]="!showLogs" [class.show]="showLogs" (mouseleave)="showLogs=false">
+      <div class="text-right" *ngIf="hash"><a [routerLink]="[{ outlets: { commit: null } }]"><i class="fas fa-external-link-alt"></i></a></div>
         <a class="btn btn-sm float-right" [class.text-muted]="!details" (click)="toggleDetails()" *ngIf="!hash"><i class="fas fa-list"></i> Details</a>
         <div class="app-log-groups">
           <div *ngFor="let log of data.logs">
