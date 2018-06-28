@@ -12,7 +12,7 @@ import { GitService } from '../git.service';
   template: `
   <div class="container-fluid">
     <div class="row app-log-list" *ngIf="logs as data">
-      <div [class.col-md-4]="hash" [class.col-md-12]="!hash" class="autoscroll">
+      <div [class.sidebar]="hash" [class.col-md-12]="!hash" class="autoscroll" [class.hide]="!showLogs" [class.show]="showLogs" (mouseleave)="showLogs=false">
         <a class="btn btn-sm float-right" [class.text-muted]="!details" (click)="toggleDetails()" *ngIf="!hash"><i class="fas fa-list"></i> Details</a>
         <div class="app-log-groups">
           <div *ngFor="let log of data.logs">
@@ -47,7 +47,8 @@ import { GitService } from '../git.service';
         <br>
         <br>
       </div>
-      <div class="col-md-8 autoscroll autoscroll-right">
+      <div class="col-md-12 autoscroll autoscroll-right">
+        <button class="btn btn-light btn-sm" (mouseover)="showLogs=true"><i class="fas fa-bars"></i></button>
         <router-outlet name="commit"></router-outlet>
       </div>
     </div>
@@ -62,6 +63,8 @@ export class LogListComponent implements OnInit {
   public details = false;
   public logs: any;
   private detailsLoaded = false;
+
+  public showLogs = false;
 
   constructor(private route: ActivatedRoute, private cdr: ChangeDetectorRef, private gitService: GitService, private router: Router) {}
 
