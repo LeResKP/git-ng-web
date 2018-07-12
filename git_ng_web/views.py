@@ -122,3 +122,37 @@ def diff_context(request):
         filename, h,
         **request.json_body['data']
     )
+
+
+@view_config(route_name='tree', renderer='json')
+def tree(request):
+    project_id = int(request.matchdict['project_id'])
+    h = request.matchdict['hash']
+    if not h.isalnum():
+        # TODO: validate correctly hash
+        raise Exception('TODO')
+    project = get_project(request, project_id)
+    if not project:
+        raise Exception('TODO')
+    gitobj = git.Git(project['path'])
+    path = request.GET['path']
+    return gitobj.tree(
+        path, h
+    )
+
+
+@view_config(route_name='blob', renderer='json')
+def blob(request):
+    project_id = int(request.matchdict['project_id'])
+    h = request.matchdict['hash']
+    if not h.isalnum():
+        # TODO: validate correctly hash
+        raise Exception('TODO')
+    project = get_project(request, project_id)
+    if not project:
+        raise Exception('TODO')
+    gitobj = git.Git(project['path'])
+    path = request.GET['path']
+    return gitobj.blob(
+        path, h
+    )

@@ -79,7 +79,7 @@ export class LogListComponent implements OnInit {
 
     obsCombined.switchMap(ap => this.gitService.getLogs(
       this.projectId,
-      ap.params.get('branch'),
+      ap.params.get('hash'),
       ap.qparams.get('r'),
       ap.qparams.get('s'))
     ).subscribe((logs => {

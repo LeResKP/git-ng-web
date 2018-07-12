@@ -57,4 +57,20 @@ export class GitService {
     const url = `${baseHref}api/projects/${projectId}/diff/${hash}/context`;
     return this.http.post(url, { path, data });
   }
+
+  tree(projectId, hash, path) {
+    let params = new HttpParams();
+    // NOTE: path can be null
+    params = params.append('path', path || '');
+    const url = `${baseHref}api/projects/${projectId}/tree/${hash}`;
+    return this.http.get(url, {params});
+  }
+
+  blob(projectId, hash, path) {
+    let params = new HttpParams();
+    // NOTE: path can be null
+    params = params.append('path', path || '');
+    const url = `${baseHref}api/projects/${projectId}/blob/${hash}`;
+    return this.http.get(url, {params});
+  }
 }

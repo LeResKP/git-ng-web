@@ -1,5 +1,8 @@
+import StringIO
 from collections import defaultdict
-from git import Repo, NULL_TREE
+from git import Repo, NULL_TREE, Tree, Blob
+import os
+import binascii
 
 
 # These constant values are used in angular
@@ -319,22 +322,22 @@ class Git(object):
             })
         return lines
 
+    def _get_diff(self, commit, create_patch):
+        if commit.parents:
+            # When it's a merge commit we have 2 parents.
+            assert len(commit.parents) < 3
+            return commit.parents[0].diff(
+                commit, create_patch=create_patch)
+        else:
+            return commit.diff(NULL_TREE, create_patch=create_patch)
+
     def get_diff(self, h):
         commit = self.repo.commit(h)
 
-        def cmd(create_patch):
-            if commit.parents:
-                # When it's a merge commit we have 2 parents.
-                assert len(commit.parents) < 3
-                return commit.parents[0].diff(
-                    commit, create_patch=create_patch)
-            else:
-                return commit.diff(NULL_TREE, create_patch=create_patch)
-
         # THe change_type and files information are returns when create_patch
         # is False
-        diffs = cmd(create_patch=False)
-        diff_with_patches = cmd(create_patch=True)
+        diffs = self._get_diff(commit, create_patch=False)
+        diff_with_patches = self._get_diff(commit, create_patch=True)
 
         new_lis = []
         path = None
@@ -372,4 +375,41 @@ class Git(object):
         return {
             'commit': self.commit_to_json(commit, stat=True),
             'diffs': new_lis
+        }
+
+    def tree(self, path, h, blob=False):
+        res = self.repo.git.ls_tree(h, path)
+        lis = []
+        for line in res.split('\n'):
+            perm, typ, sha, path = filter(bool, line.replace('\t', ' ').split(' '))
+
+            dic = {
+                'name': os.path.basename(path),
+                'type': typ,
+                'path': path,
+            }
+            if blob and typ == 'blob':
+                dic['blob'] = sha
+            lis.append(dic)
+        return sorted(lis, key=lambda x: (x['type'] == 'blob', x['name']))
+
+    def blob(self, path, h):
+        lis = self.tree(path, h, blob=True)
+        assert(len(lis) == 1)
+        blob = lis[0]['blob']
+
+        bl = Blob(
+            self.repo,
+            binascii.unhexlify(blob))
+        sio = StringIO.StringIO()
+        bl.stream_data(sio)
+        lines = []
+        for index, line in enumerate(sio.getvalue().split('\n'), start=1):
+            lines.append({
+                'line_num': index,
+                'content': line
+            })
+        return {
+            'lines': lines,
+            'path': path,
         }

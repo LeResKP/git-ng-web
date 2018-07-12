@@ -45,5 +45,12 @@ def main(global_config, **settings):
     config.add_route('opt',
                      '/api/projects/:project_id/diff/:hash/context',
                      request_method='OPTIONS')
+
+    config.add_route('tree',
+                     '/api/projects/:project_id/tree/:hash',
+                     request_method='GET')
+    config.add_route('blob',
+                     '/api/projects/:project_id/blob/:hash',
+                     request_method='GET')
     config.scan()
     return config.make_wsgi_app()
