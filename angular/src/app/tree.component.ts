@@ -9,11 +9,11 @@ import { GitService } from './git.service';
 
 @Component({
   template: `
-    <div *ngIf="projectId !== null"><a [routerLink]="['/p', projectId, 'commits', hash]" href="#">Commits</a></div>
+    <div *ngIf="projectId !== null"><a [routerLink]="['/', projectId, hash, 'commits']" href="#">Commits</a></div>
     <ul *ngIf="data$ | async as data" class="list-unstyled">
       <li *ngFor="let file of data">
         <i [class.fa-folder]="file.type === 'tree'" [class.fa-file]="file.type === 'blob'" class="far"></i>
-        <a *ngIf="file.type === 'tree'" [routerLink]="treeUrl(file)">{{file.name}}</a>
+        <a *ngIf="file.type === 'tree'" href="" [routerLink]="treeUrl(file)">{{file.name}}</a>
         <a *ngIf="file.type === 'blob'" [routerLink]="blobUrl(file)">{{file.name}}</a>
       </li>
     </ul>
@@ -29,15 +29,11 @@ export class TreeComponent implements OnInit {
 
 
   ngOnInit() {
+    this.projectId = +this.route.snapshot.params['projectId'];
+    this.hash = this.route.snapshot.params['sha'];
 
-    const obsCombined = Observable.combineLatest(
-      this.route.paramMap, this.route.url,
-      (params, url) => ({params, url}));
-
-    this.data$ = obsCombined.switchMap((ap) => {
-      this.projectId = this.route.parent.parent.snapshot.params['id'];
-      this.hash = ap.params.get('hash');
-      let path = ap.url.map((seg) => seg.path).join('/');
+    this.data$ = this.route.url.switchMap((url) => {
+      let path = url.map((seg) => seg.path).join('/');
       if (path) {
         path += '/';
       }
@@ -47,7 +43,7 @@ export class TreeComponent implements OnInit {
   }
 
   treeUrl(file) {
-    const paths = ['/p', this.projectId, 'tree', this.hash];
+    const paths = ['/', this.projectId, this.hash, 'tree'];
     if (!file.path) {
       return paths;
     }
@@ -55,7 +51,7 @@ export class TreeComponent implements OnInit {
   }
 
   blobUrl(file) {
-    const paths = ['/p', this.projectId, 'blob', this.hash];
+    const paths = ['/', this.projectId, this.hash, 'blob'];
     if (!file.path) {
       return paths;
     }

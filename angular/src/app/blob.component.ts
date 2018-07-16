@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
-import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/switchMap';
 
 import { GitService } from './git.service';
@@ -29,21 +28,14 @@ import { GitService } from './git.service';
 export class BlobComponent implements OnInit {
 
   public data$;
-  private projectId;
-  private hash;
-  private filename: string;
 
-  constructor(private route: ActivatedRoute, private gitService: GitService, private router: Router) {}
+  constructor(private route: ActivatedRoute, private gitService: GitService) {}
 
   ngOnInit() {
-
-    this.data$ = this.route.paramMap.switchMap((params) => {
-      this.projectId = this.route.parent.parent.snapshot.params['id'];
-      this.hash = params.get('hash');
-      const path = this.route.snapshot.url.map((seg) => seg.path).join('/');
-      return this.gitService.blob(
-        this.projectId, this.hash, path);
-    });
+    const projectId = +this.route.snapshot.params['projectId'];
+    const hash = this.route.snapshot.params['sha'];
+    const path = this.route.snapshot.url.map((seg) => seg.path).join('/');
+    this.data$ = this.gitService.blob(projectId, hash, path);
   }
 
 }

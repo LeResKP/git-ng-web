@@ -10,7 +10,7 @@ import { AppComponent } from './app.component';
 import { GitService } from './git.service';
 import { LogListComponent } from './logs/log-list.component';
 import { LogsModule } from './logs/logs.module';
-import { MainComponent, RedirectBranchComponent } from './main.component';
+import { RedirectBranchComponent } from './main.component';
 import { SelectorComponent } from './selector.component';
 import { CommitComponent } from './commit.component';
 import { TreeComponent } from './tree.component';
@@ -19,17 +19,26 @@ import { BreadcrumbComponent, BreadcrumbService } from './breadcrumb';
 
 
 const appRoutes: Routes = [
-  { path: '', redirectTo: 'p/0', pathMatch: 'full'},
+  { path: '', redirectTo: '0', pathMatch: 'full'},
   {
-    path: 'p/:id',
-    component: MainComponent,
+    path: ':projectId/:sha',
     children: [
       {
-        path: '',
-        component: RedirectBranchComponent,
+        path: 'tree',
+        children: [{
+          path: '**',
+          component: TreeComponent,
+        }]
       },
       {
-        path: 'commits/:hash',
+        path: 'blob',
+        children: [{
+          path: '**',
+          component: BlobComponent,
+        }]
+      },
+      {
+        path: 'commits',
         component: LogListComponent,
         children: [
           {
@@ -39,29 +48,14 @@ const appRoutes: Routes = [
           },
         ]
       },
-      {
-        path: 'tree/:hash',
-        children: [{
-            path: '**',
-            component: TreeComponent,
-        }]
-      },
-      {
-        path: 'blob/:hash',
-        children: [{
-            path: '**',
-            component: BlobComponent,
-        }]
-      },
     ]
-  },
+  }
 ];
 
 
 @NgModule({
   declarations: [
     AppComponent,
-    MainComponent,
     RedirectBranchComponent,
     SelectorComponent,
     CommitComponent,
