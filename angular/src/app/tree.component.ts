@@ -9,31 +9,41 @@ import { GitService } from './git.service';
 
 @Component({
   template: `
-    <div *ngIf="projectId !== null"><a [routerLink]="['/', projectId, hash, 'commits']" href="#">Commits</a></div>
-    <ul *ngIf="data$ | async as data" class="list-unstyled">
-      <li *ngFor="let file of data">
+  <div class="container-fluid">
+    <app-breadcrumb [items]="breadcrumbItems"></app-breadcrumb>
+    <div *ngIf="data$ | async as data" class="list-group list-group-tree">
+      <a  [routerLink]="url(file)" *ngFor="let file of data" class="list-group-item list-group-item-action">
         <i [class.fa-folder]="file.type === 'tree'" [class.fa-file]="file.type === 'blob'" class="far"></i>
-        <a *ngIf="file.type === 'tree'" href="" [routerLink]="treeUrl(file)">{{file.name}}</a>
-        <a *ngIf="file.type === 'blob'" [routerLink]="blobUrl(file)">{{file.name}}</a>
-      </li>
-    </ul>
+        {{file.name}}
+      </a>
+    </div>
+  </div>
   `,
 })
 export class TreeComponent implements OnInit {
 
+
   public data$;
   public projectId;
   public hash;
+  public breadcrumbItems = [];
 
   constructor(private route: ActivatedRoute, private gitService: GitService, private router: Router) {}
 
 
   ngOnInit() {
-    this.projectId = +this.route.snapshot.params['projectId'];
-    this.hash = this.route.snapshot.params['sha'];
+    const obsCombined = Observable.combineLatest(
+      this.route.parent.parent.paramMap, this.route.url,
+      (params, url) => ({params, url}));
 
-    this.data$ = this.route.url.switchMap((url) => {
-      let path = url.map((seg) => seg.path).join('/');
+    this.data$ = obsCombined.switchMap((ap) => {
+      const url = ap.url;
+      const params = ap.params;
+      const paths = url.map((seg) => seg.path);
+      let path = paths.join('/');
+      this.projectId = ap.params.get('projectId');
+      this.hash = ap.params.get('sha');
+      this.updateBreadcrumb(paths);
       if (path) {
         path += '/';
       }
@@ -42,19 +52,31 @@ export class TreeComponent implements OnInit {
     });
   }
 
-  treeUrl(file) {
-    const paths = ['/', this.projectId, this.hash, 'tree'];
+  url(file) {
+    const paths = ['/', this.projectId, this.hash, file.type];
     if (!file.path) {
       return paths;
     }
     return paths.concat(file.path.split('/'));
   }
 
-  blobUrl(file) {
-    const paths = ['/', this.projectId, this.hash, 'blob'];
-    if (!file.path) {
-      return paths;
-    }
-    return paths.concat(file.path.split('/'));
+  updateBreadcrumb(paths) {
+    const lis = ['/', this.projectId, this.hash, 'tree'];
+    const n = [{
+      'name': 'Home',
+      'paths': lis.slice(),
+    }];
+
+    paths.map(path => {
+      lis.push(path);
+      n.push({
+          'name': path,
+          'paths': lis.slice(),
+        });
+    });
+    // Change detection issue
+    setTimeout(() => {
+      this.breadcrumbItems = n;
+    });
   }
 }

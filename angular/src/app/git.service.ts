@@ -1,8 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 
-import { Observable, ReplaySubject } from 'rxjs/Rx';
+import { Observable, ReplaySubject, Subscription } from 'rxjs/Rx';
 import 'rxjs/add/operator/map';
+
+import { shareReplay, map } from 'rxjs/operators';
+
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
 
 const baseHref = 'http://127.0.0.1:6543/';
@@ -17,6 +21,8 @@ export class GitService {
 
   commitHash: ReplaySubject<string> = new ReplaySubject(1);
 
+  private _projects$: Observable<Array<any>>;
+
   constructor(private http: HttpClient) { }
 
 
@@ -24,12 +30,15 @@ export class GitService {
     this.commitHash.next(hash);
   }
 
-  getProjects(): Observable<[any]> {
-    return this.http.get<[any]>(API_URLS.projects);
+  get projects$() {
+    if (!this._projects$) {
+      this._projects$ = this.http.get<[any]>(API_URLS.projects).pipe(shareReplay(1));
+    }
+    return this._projects$;
   }
 
   getProject(id) {
-    return this.getProjects()
+    return this.projects$
       .map(projects =>
         projects.find(project => project.id === +id));
   }

@@ -10,18 +10,19 @@ import { AppComponent } from './app.component';
 import { GitService } from './git.service';
 import { LogListComponent } from './logs/log-list.component';
 import { LogsModule } from './logs/logs.module';
-import { RedirectBranchComponent } from './main.component';
+import { MainComponent, RedirectBranchComponent } from './main.component';
 import { SelectorComponent } from './selector.component';
 import { CommitComponent } from './commit.component';
 import { TreeComponent } from './tree.component';
 import { BlobComponent } from './blob.component';
-import { BreadcrumbComponent, BreadcrumbService } from './breadcrumb';
+import { BreadcrumbComponent } from './breadcrumb';
 
 
 const appRoutes: Routes = [
   { path: '', redirectTo: '0', pathMatch: 'full'},
   {
     path: ':projectId/:sha',
+    component: MainComponent,
     children: [
       {
         path: 'tree',
@@ -62,6 +63,7 @@ const appRoutes: Routes = [
     TreeComponent,
     BlobComponent,
     BreadcrumbComponent,
+    MainComponent,
   ],
   imports: [
     BrowserModule,
@@ -70,7 +72,7 @@ const appRoutes: Routes = [
     NgbModule.forRoot(),
     LogsModule,
   ],
-  providers: [BreadcrumbService, GitService],
+  providers: [GitService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

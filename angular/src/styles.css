@@ -122,3 +122,33 @@ a.nostyle:hover {
   text-align: center;
   padding-top: 200px;
 }
+
+app-breadcrumb {
+  display: block;
+  margin-top: 20px;
+}
+
+breadcrumb nav {
+  position: relative;
+}
+
+breadcrumb nav button {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+}
+
+.list-group-item {
+  padding: 5px 20px;
+}
+
+.list-group-tree i {
+  margin-right: 10px;
+}
+
+.breadcrumb-tree {
+  background: none;
+  padding: 0;
+  margin-bottom: 5px;
+  font-size: 12px;
+}
