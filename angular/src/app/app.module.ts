@@ -10,7 +10,7 @@ import { AppComponent } from './app.component';
 import { GitService } from './git.service';
 import { LogListComponent } from './logs/log-list.component';
 import { LogsModule } from './logs/logs.module';
-import { MainComponent, RedirectBranchComponent } from './main.component';
+import { MainComponent, RedirectComponent } from './main.component';
 import { SelectorComponent } from './selector.component';
 import { CommitComponent } from './commit.component';
 import { TreeComponent } from './tree.component';
@@ -19,7 +19,10 @@ import { BreadcrumbComponent } from './breadcrumb';
 
 
 const appRoutes: Routes = [
-  { path: '', redirectTo: '0', pathMatch: 'full'},
+  {
+    path: '',
+    component: RedirectComponent,
+  },
   {
     path: ':projectId/:sha',
     component: MainComponent,
@@ -57,7 +60,7 @@ const appRoutes: Routes = [
 @NgModule({
   declarations: [
     AppComponent,
-    RedirectBranchComponent,
+    RedirectComponent,
     SelectorComponent,
     CommitComponent,
     TreeComponent,

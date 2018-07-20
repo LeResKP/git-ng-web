@@ -11,24 +11,15 @@ import { SelectorChoice } from './selector.component';
 @Component({
   template: '',
 })
-export class RedirectBranchComponent implements OnDestroy, OnInit {
-
-  private subscription: Subscription;
+export class RedirectComponent implements OnInit {
 
   constructor(private route: ActivatedRoute, private router: Router, private gitService: GitService) {}
 
   ngOnInit() {
-    const projectId = this.route.parent.snapshot.params['id'];
-    this.subscription = this.route.paramMap
-        .switchMap((params: ParamMap) =>
-          this.gitService.getProject(projectId))
-        .subscribe(project => {
-          this.router.navigate(['/p', projectId, 'tree', project.branches.default]);
-        });
-  }
 
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
+    this.gitService.projects$.first().subscribe(projects => {
+      this.router.navigate(['/', projects[0].id, projects[0].branches.default, 'tree']);
+    });
   }
 }
 
