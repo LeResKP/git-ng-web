@@ -31,6 +31,12 @@ export class RedirectComponent implements OnInit {
       <ul class="navbar-nav mr-auto">
         <li class="nav-item dropdown" app-selector label="Project" [choices]="projectChoices" [value]="projectId"></li>
         <li class="nav-item dropdown" app-selector label="Branch" [choices]="branchChoices" [value]="hash"></li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" routerLinkActive="active" [routerLink]="['/', projectId, hash, 'tree']">Tree</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" routerLinkActive="active" [routerLink]="['/', projectId, hash, 'commits']">Commits</a>
+        </li>
       </ul>
     </nav>
     <router-outlet></router-outlet>

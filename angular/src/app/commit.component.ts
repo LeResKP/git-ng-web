@@ -20,7 +20,7 @@ export class CommitComponent implements OnDestroy, OnInit, AfterViewChecked {
   constructor(private route: ActivatedRoute, private gitService: GitService, private router: Router) {}
 
   ngOnInit() {
-    this.projectId = this.route.parent.snapshot.params['projectId'];
+    this.projectId = this.route.parent.parent.snapshot.params['projectId'];
     this.route.paramMap
         .switchMap((params: ParamMap) => {
           this.data = null;

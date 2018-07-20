@@ -12,14 +12,14 @@ import { GitService } from '../git.service';
   template: `
   <div class="container-fluid">
     <div class="row app-log-list" *ngIf="logs as data">
-      <div [class.sidebar]="hash" [class.col-md-12]="!hash" class="autoscroll" [class.hide]="!showLogs" [class.show]="showLogs" (mouseleave)="showLogs=false">
-      <div class="text-right" *ngIf="hash"><a [routerLink]="[{ outlets: { commit: null } }]"><i class="fas fa-external-link-alt"></i></a></div>
-        <a class="btn btn-sm float-right" [class.text-muted]="!details" (click)="toggleDetails()" *ngIf="!hash"><i class="fas fa-list"></i> Details</a>
+      <div [class.sidebar]="commitHash" [class.col-md-12]="!commitHash" class="autoscroll" [class.hide]="!showLogs" [class.show]="showLogs" (mouseleave)="showLogs=false">
+      <div class="text-right" *ngIf="sidbar"><a [routerLink]="[{ outlets: { commit: null } }]"><i class="fas fa-external-link-alt"></i></a></div>
+        <a class="btn btn-sm float-right" [class.text-muted]="!details" (click)="toggleDetails()" *ngIf="!commitHash"><i class="fas fa-list"></i> Details</a>
         <div class="app-log-groups">
           <div *ngFor="let log of data.logs">
             <div class="log-date small text-secondary"><i class="far fa-clock"></i> {{log[0] | date}}</div>
               <ul class="list-group">
-                <li class="list-group-item" *ngFor="let log of log[1]" [class.active]="hash === log.hash">
+                <li class="list-group-item" *ngFor="let log of log[1]" [class.active]="commitHash === log.hash">
                   <a [routerLink]="[{ outlets: { commit: ['h', log.hash] } }]" queryParamsHandling="preserve" class="nostyle d-block" (click)="showLogs=false">
                     {{log.summary}}
                     <div class="clearfix small">
@@ -30,7 +30,7 @@ import { GitService } from '../git.service';
                       <span *ngFor="let branch of log.branches" class="badge badge-secondary mr-2">{{branch}}</span>
                     </div>
                   </a>
-                  <ng-template [ngIf]="!hash && details">
+                  <ng-template [ngIf]="!commitHash && details">
                   <ul class="small list-unstyled stats" *ngIf="log.stats$ | async as stats">
                     <li *ngFor="let stat of stats.files">{{stat.filename}} <span class="color-added">+ {{stat.data.insertions}}</span> <span class="color-deleted">- {{stat.data.deletions}}</span></li>
                   </ul>
@@ -64,15 +64,15 @@ export class LogListComponent implements OnInit {
   public details = false;
   public logs: any;
   private detailsLoaded = false;
+  public commitHash = null;
 
   public showLogs = false;
 
   constructor(private route: ActivatedRoute, private cdr: ChangeDetectorRef, private gitService: GitService, private router: Router) {}
 
   ngOnInit() {
-
-    this.projectId = +this.route.snapshot.params['projectId'];
-    this.hash = this.route.snapshot.params['sha'];
+    this.projectId = +this.route.parent.snapshot.params['projectId'];
+    this.hash = this.route.parent.snapshot.params['sha'];
 
     this.route.queryParamMap.switchMap((qparams) => {
       return this.gitService.getLogs(
@@ -86,7 +86,7 @@ export class LogListComponent implements OnInit {
       });
 
     this.gitService.commitHash.subscribe((hash: string) => {
-      setTimeout(() => this.hash = hash);
+      setTimeout(() => this.commitHash = hash);
     });
   }
 
