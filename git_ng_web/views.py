@@ -96,7 +96,11 @@ def diff(request):
     if not project:
         raise Exception('TODO')
     gitobj = git.Git(project['path'])
-    return gitobj.get_diff(h)
+    ignore_all_space = bool(request.GET.get('ignore-all-space'))
+    unified = request.GET.get('unified')
+    unified = int(unified) if unified and unified.isdigit() else None
+    return gitobj.get_diff(h, ignore_all_space=ignore_all_space,
+                           unified=unified)
 
 
 @view_config(route_name='opt', renderer='json')

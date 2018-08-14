@@ -6,6 +6,8 @@ import 'rxjs/add/operator/switchMap';
 import { GitService } from './git.service';
 
 
+const DEFAULT_DIFF_CONTEXT = 3;
+
 @Component({
   selector: 'app-commit',
   templateUrl: `./diff.component.html`,
@@ -17,18 +19,23 @@ export class CommitComponent implements OnDestroy, OnInit, AfterViewChecked {
   private hash;
   private filename: string;
 
+  public ignoreAllSpace = false;
+  public context = DEFAULT_DIFF_CONTEXT;
+
   constructor(private route: ActivatedRoute, private gitService: GitService, private router: Router) {}
 
   ngOnInit() {
     this.projectId = this.route.parent.parent.snapshot.params['projectId'];
     this.route.paramMap
         .switchMap((params: ParamMap) => {
+          this.ignoreAllSpace = params.get('ias') === 'true';
+          this.context = +(params.get('unified') || DEFAULT_DIFF_CONTEXT);
           this.data = null;
           this.gitService.setCommitHash(params.get('hash'));
           document.querySelector('.autoscroll-right').scrollTop = 0;
           this.hash = params.get('hash');
           return this.gitService.getDiff(
-            this.projectId, this.hash);
+            this.projectId, this.hash, this.ignoreAllSpace, this.context);
         }).subscribe(data => {
           this.data = data;
         });
@@ -72,6 +79,16 @@ export class CommitComponent implements OnDestroy, OnInit, AfterViewChecked {
 
   close() {
     this.router.navigate([{outlets: {commit: null}} ], {relativeTo: this.route.parent});
+  }
+
+  ignoreAllSpaceChange(value) {
+    this.ignoreAllSpace = value;
+    this.router.navigate([{outlets: {commit: ['h', this.hash, {ias: this.ignoreAllSpace, unified: this.context}]}}], {relativeTo: this.route.parent});
+  }
+
+  unifiedChange(value) {
+    this.context = value;
+    this.router.navigate([{outlets: {commit: ['h', this.hash, {ias: this.ignoreAllSpace, unified: this.context}]}}], {relativeTo: this.route.parent});
   }
 
 }

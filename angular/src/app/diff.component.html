@@ -27,26 +27,48 @@
       <li *ngFor="let stat of data.commit.stats.files"><a [routerLink]="" [fragment]="stat.filename">{{stat.filename}}</a> <span class="color-added">+ {{stat.data.insertions}}</span> <span class="color-deleted">- {{stat.data.deletions}}</span></li>
     </ul>
   </div>
-  <div *ngFor="let d of data.diffs" class="card mb-4">
-    <div class="card-body" [id]="d.path">
-      <div class="card-title">{{d.title}}</div>
-      <table class="table-code" *ngIf="d.lines.length">
-        <ng-template ngFor let-line [ngForOf]="d.lines">
-          <tr [class]="'code-line-' + line.type" *ngIf="line.type !== 'hidden'">
-            <ng-template [ngIf]="line.type === 'expand'">
-              <td colspan="2" class="text-center">
-                <a href="#" (click)="expand(line, d.path, d.lines, d)" class="d-block"><i class="fas fa-arrows-alt-v"></i></a>
-              </td>
-            </ng-template>
-            <ng-template [ngIf]="line.type !== 'expand'">
-              <td class="code-line-number">{{line.a_line_num}}</td>
-              <td class="code-line-number">{{line.b_line_num}}</td>
-            </ng-template>
-            <td class="code-pre">{{line.content}}</td>
-          </tr>
-        </ng-template>
-      </table>
-      <div *ngIf="!d.lines.length">No content</div>
+
+  <div class="clearfix mb-2">
+    <div class="form-inline small float-right">
+      <div class="form-check mr-sm-3">
+        <input type="checkbox" class="form-check-input" id="ignore-all-space" #ias [checked]="ignoreAllSpace" (change)="ignoreAllSpaceChange(ias.checked);" />
+        <label class="form-check-label" for="ignore-all-space">Ignore all space</label>
+      </div>
+
+      <input type="number" min="0" [value]="context" (blur)="unifiedChange(uni.value)" #uni style="width: 50px" />
     </div>
   </div>
+
+  <ng-template [ngIf]="data?.diffs">
+    <ng-template [ngIf]="data.diffs.length > 0">
+      <div *ngFor="let d of data.diffs" class="card mb-4">
+        <div class="card-body" [id]="d.path">
+          <div class="card-title">{{d.title}}</div>
+          <table class="table-code" *ngIf="d.lines.length">
+            <ng-template ngFor let-line [ngForOf]="d.lines">
+              <tr [class]="'code-line-' + line.type" *ngIf="line.type !== 'hidden'">
+                <ng-template [ngIf]="line.type === 'expand'">
+                  <td colspan="2" class="text-center">
+                    <a href="#" (click)="expand(line, d.path, d.lines, d)" class="d-block"><i class="fas fa-arrows-alt-v"></i></a>
+                  </td>
+                </ng-template>
+                <ng-template [ngIf]="line.type !== 'expand'">
+                  <td class="code-line-number">{{line.a_line_num}}</td>
+                  <td class="code-line-number">{{line.b_line_num}}</td>
+                </ng-template>
+                <td class="code-pre">{{line.content}}</td>
+              </tr>
+            </ng-template>
+          </table>
+          <div *ngIf="!d.lines.length">No content</div>
+        </div>
+      </div>
+    </ng-template>
+
+    <div class="card mb-4" *ngIf="data.diffs.length === 0">
+      <div class="card-body">
+        No diff
+      </div>
+    </div>
+  </ng-template>
 </div>

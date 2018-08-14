@@ -1,6 +1,6 @@
 import StringIO
 from collections import defaultdict
-from git import Repo, NULL_TREE, Tree, Blob
+from git import Repo, NULL_TREE, Blob
 import os
 import binascii
 
@@ -14,6 +14,8 @@ DIFF_LINE_TYPE_EXPAND = 'expand'
 DIFF_LINE_TYPE_HIDDEN = 'hidden'
 
 DIFF_CONTEXT_LINE = 20
+
+DEFAULT_DIFF_CONTEXT = 3
 
 
 def get_line_number_hunk(s):
@@ -322,22 +324,29 @@ class Git(object):
             })
         return lines
 
-    def _get_diff(self, commit, create_patch):
+    def _get_diff(self, commit, create_patch,
+                  ignore_all_space=False, unified=DEFAULT_DIFF_CONTEXT):
+        unified = unified if unified is not None else DEFAULT_DIFF_CONTEXT
         if commit.parents:
             # When it's a merge commit we have 2 parents.
             assert len(commit.parents) < 3
             return commit.parents[0].diff(
-                commit, create_patch=create_patch)
+                commit, create_patch=create_patch,
+                ignore_all_space=ignore_all_space, unified=unified)
         else:
-            return commit.diff(NULL_TREE, create_patch=create_patch)
+            return commit.diff(NULL_TREE, create_patch=create_patch,
+                               ignore_all_space=ignore_all_space,
+                               unified=unified)
 
-    def get_diff(self, h):
+    def get_diff(self, h, ignore_all_space=False, unified=DEFAULT_DIFF_CONTEXT):
         commit = self.repo.commit(h)
 
         # THe change_type and files information are returns when create_patch
         # is False
         diffs = self._get_diff(commit, create_patch=False)
-        diff_with_patches = self._get_diff(commit, create_patch=True)
+        diff_with_patches = self._get_diff(commit, create_patch=True,
+                                           ignore_all_space=ignore_all_space,
+                                           unified=unified)
 
         new_lis = []
         path = None

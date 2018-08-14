@@ -57,9 +57,14 @@ export class GitService {
     return this.http.get(url);
   }
 
-  getDiff(projectId, hash) {
+  getDiff(projectId, hash, ignoreAllSpace, unified) {
     const url = `${baseHref}api/projects/${projectId}/diff/${hash}`;
-    return this.http.get(url);
+    let params = new HttpParams();
+    if (ignoreAllSpace) {
+      params = params.append('ignore-all-space', ignoreAllSpace);
+    }
+    params = params.append('unified', unified);
+    return this.http.get(url, { params });
   }
 
   getContextDiff(projectId, hash, path, data) {
