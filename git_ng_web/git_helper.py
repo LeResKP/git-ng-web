@@ -63,7 +63,6 @@ def _parse_patch(content, nb_lines):
     if not content:
         return []
 
-    lines = []
     last_separator = None
 
     a_line_num = 1
@@ -73,8 +72,13 @@ def _parse_patch(content, nb_lines):
     # Make sure the end of patch is correct
     assert lis[-1] == ''
 
+    lines = []
+    groups = []
     for line in lis[:-1]:
         if line.startswith('@@'):
+            if lines:
+                groups.append(lines)
+                lines = []
             data = parse_hunk_title(line)
             if data['b_line_num'] == 1:
                 continue
@@ -143,7 +147,9 @@ def _parse_patch(content, nb_lines):
             },
         })
 
-    return lines
+    if lines:
+        groups.append(lines)
+    return groups
 
 
 class Git(object):
@@ -378,7 +384,7 @@ class Git(object):
             new_lis.append({
                 'path': path,
                 'title': title,
-                'lines': lines,
+                'groups': lines,
             })
 
         return {

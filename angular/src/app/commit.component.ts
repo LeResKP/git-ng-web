@@ -63,12 +63,11 @@ export class CommitComponent implements OnDestroy, OnInit, AfterViewChecked {
     this.scrollToAnchor();
   }
 
-  expand(line, path, lines, d) {
-    // TODO: we don't need lines and d since d contains lines
+  expand(line, path, lines) {
     const index = lines.indexOf(line);
     this.gitService.getContextDiff(this.projectId, this.hash, path, line['context_data']
                                   ).subscribe(res => {
-      d.lines.splice(index, 1, ...res as Array<any>);
+      lines.splice(index, 1, ...res as Array<any>);
     });
     return false;
   }

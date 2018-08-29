@@ -44,12 +44,13 @@
       <div *ngFor="let d of data.diffs" class="card mb-4">
         <div class="card-body" [id]="d.path">
           <div class="card-title">{{d.title}}</div>
-          <table class="table-code" *ngIf="d.lines.length">
-            <ng-template ngFor let-line [ngForOf]="d.lines">
+          <table class="table-code" *ngIf="d.groups.length">
+            <ng-template ngFor let-lines [ngForOf]="d.groups">
+              <ng-template ngFor let-line [ngForOf]="lines">
               <tr [class]="'code-line-' + line.type" *ngIf="line.type !== 'hidden'">
                 <ng-template [ngIf]="line.type === 'expand'">
                   <td colspan="2" class="text-center">
-                    <a href="#" (click)="expand(line, d.path, d.lines, d)" class="d-block"><i class="fas fa-arrows-alt-v"></i></a>
+                    <a href="#" (click)="expand(line, d.path, lines)" class="d-block"><i class="fas fa-arrows-alt-v"></i></a>
                   </td>
                 </ng-template>
                 <ng-template [ngIf]="line.type !== 'expand'">
@@ -59,8 +60,9 @@
                 <td class="code-pre">{{line.content}}</td>
               </tr>
             </ng-template>
+            </ng-template>
           </table>
-          <div *ngIf="!d.lines.length">No content</div>
+          <div *ngIf="!d.groups.length">No content</div>
         </div>
       </div>
     </ng-template>
