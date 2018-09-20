@@ -32,10 +32,10 @@ export class RedirectComponent implements OnInit {
         <li class="nav-item dropdown" app-selector label="Project" [choices]="projectChoices" [value]="projectId"></li>
         <li class="nav-item dropdown" app-selector label="Branch" [choices]="branchChoices" [value]="hash"></li>
         <li class="nav-item">
-          <a class="nav-link" href="#" routerLinkActive="active" [routerLink]="['/', projectId, hash, 'tree']">Tree</a>
+          <a class="nav-link" href="#" routerLinkActive="active" [routerLink]="['/', projectId, hash, 'tree']" [routerLinkActiveOptions]="{ exact: false, __change_detection_hack__: [projectId, hash] }">Tree</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#" routerLinkActive="active" [routerLink]="['/', projectId, hash, 'commits']">Commits</a>
+          <a class="nav-link" href="#" routerLinkActive="active" [routerLink]="['/', projectId, hash, 'commits']"  [routerLinkActiveOptions]="{ exact: false, __change_detection_hack__: [projectId, hash] }">Commits</a>
         </li>
       </ul>
     </nav>
