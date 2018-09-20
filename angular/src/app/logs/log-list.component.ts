@@ -70,16 +70,21 @@ export class LogListComponent implements OnInit {
 
   constructor(private route: ActivatedRoute, private cdr: ChangeDetectorRef, private gitService: GitService, private router: Router) {}
 
-  ngOnInit() {
-    this.projectId = +this.route.parent.snapshot.params['projectId'];
-    this.hash = this.route.parent.snapshot.params['sha'];
 
-    this.route.queryParamMap.switchMap((qparams) => {
+  ngOnInit() {
+    const obsCombined = Observable.combineLatest(
+      this.route.parent.paramMap, this.route.queryParamMap,
+      (params, qparams) => ({params, qparams}));
+
+    obsCombined.switchMap((ap) => {
+      this.projectId = +ap.params.get('projectId');
+      this.hash = ap.params.get('sha');
+
       return this.gitService.getLogs(
         this.projectId,
         this.hash,
-        qparams.get('r'),
-        qparams.get('s'));
+        ap.qparams.get('r'),
+        ap.qparams.get('s'));
     }).subscribe((logs) => {
         this.logs = logs;
         this.detailsLoaded = false;

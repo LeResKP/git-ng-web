@@ -18,7 +18,7 @@ export class RedirectComponent implements OnInit {
   ngOnInit() {
 
     this.gitService.projects$.first().subscribe(projects => {
-      this.router.navigate(['/', projects[0].id, projects[0].branches.default, 'tree']);
+      this.router.navigate(['/', projects[0].id, projects[0].branches.default, 'commits']);
     });
   }
 }
@@ -59,7 +59,7 @@ export class MainComponent implements OnInit {
         this.projectChoices.push({
           label: project.name,
           value: project.id,
-          routerLink: ['/', project.id, project.branches.default, 'tree'],
+          routerLink: ['/', project.id, project.branches.default, 'commits'],
         });
       });
     });
@@ -74,7 +74,7 @@ export class MainComponent implements OnInit {
           this.branchChoices.push({
             label: branch,
             value: branch,
-            routerLink: ['/', this.projectId, branch, 'tree'],
+            routerLink: ['/', this.projectId, branch, 'commits'],
           });
         });
       });
