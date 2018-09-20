@@ -1,5 +1,6 @@
 import unittest
 
+import diff_match_patch as dmp_module
 from mock import patch
 from pyramid import testing
 
@@ -8,7 +9,12 @@ from .git_helper import (
     _get_missing_lines,
     _parse_patch,
     parse_hunk_title,
+    DIFF_LINE_TYPE_ADDED,
+    DIFF_LINE_TYPE_DELETED,
+    DIFF_LINE_TYPE_CONTEXT,
 )
+
+from .match import should_apply_diff, transform_lines
 
 
 def clean_patch(patch):
@@ -110,7 +116,7 @@ class TestGitHelper(unittest.TestCase):
         '''
 
         res = _parse_patch(clean_patch(patch), 8)
-        expected = [
+        expected = [[
             {
                 'content': '+This is a new file:',
                 'a_line_num': None,
@@ -159,7 +165,7 @@ class TestGitHelper(unittest.TestCase):
                 'type': 'added',
                 'b_line_num': 8
             }
-        ]
+        ]]
         self.assertEqual(res, expected)
 
     def test_parse_patch_delete(self):
@@ -175,7 +181,7 @@ class TestGitHelper(unittest.TestCase):
             -line 6
         '''
         res = _parse_patch(clean_patch(patch), 8)
-        expected = [
+        expected = [[
             {
                 'content': '-This is a new file:',
                 'a_line_num': 1,
@@ -224,7 +230,7 @@ class TestGitHelper(unittest.TestCase):
                 'type': 'deleted',
                 'b_line_num': None
             }
-        ]
+        ]]
         self.assertEqual(res, expected)
 
     def test_parse_patch_first_line(self):
@@ -237,7 +243,7 @@ class TestGitHelper(unittest.TestCase):
              line 1
         '''
         res = _parse_patch(clean_patch(patch), 5)
-        expected = [
+        expected = [[
             {
                 'b_line_num': 1,
                 'a_line_num': None,
@@ -267,11 +273,11 @@ class TestGitHelper(unittest.TestCase):
                 'a_line_num': 3,
                 'content': 'line 1',
                 'type': 'context'
-            }]
+            }]]
         self.assertEqual(res, expected)
 
         res = _parse_patch(clean_patch(patch), 8)
-        expected = [
+        expected = [[
             {
                 'b_line_num': 1,
                 'a_line_num': None,
@@ -314,7 +320,7 @@ class TestGitHelper(unittest.TestCase):
                     'prev_b_line_num': None},
                 'type': 'expand'
             }
-        ]
+        ]]
         self.assertEqual(res, expected)
 
     def test_parse_patch_middle_line(self):
@@ -329,7 +335,7 @@ class TestGitHelper(unittest.TestCase):
              line 5
         '''
         res = _parse_patch(clean_patch(patch), 7)
-        expected = [
+        expected = [[
             {
                 'b_line_num': None,
                 'a_line_num': None,
@@ -385,11 +391,11 @@ class TestGitHelper(unittest.TestCase):
                 'content': 'line 5',
                 'type': 'context'
             }
-        ]
+        ]]
         self.assertEqual(res, expected)
 
         res = _parse_patch(clean_patch(patch), 10)
-        expected = [
+        expected = [[
             {
                 'b_line_num': None,
                 'a_line_num': None,
@@ -457,7 +463,7 @@ class TestGitHelper(unittest.TestCase):
                     'prev_b_line_num': None},
                 'type': 'expand'
             }
-        ]
+        ]]
         self.assertEqual(res, expected)
 
     def test_parse_patch_last_line(self):
@@ -469,7 +475,7 @@ class TestGitHelper(unittest.TestCase):
             +this is a new line
         '''
         res = _parse_patch(clean_patch(patch), 4)
-        expected = [
+        expected = [[
             {
                 'b_line_num': None,
                 'a_line_num': None,
@@ -507,7 +513,7 @@ class TestGitHelper(unittest.TestCase):
                 'content': '+this is a new line',
                 'type': 'added'
             }
-        ]
+        ]]
         self.assertEqual(res, expected)
 
     def test_get_diff_context_middle_line(self):
@@ -890,3 +896,93 @@ class TestGitHelper(unittest.TestCase):
                 }
             ]
             self.assertEqual(res, expected)
+
+
+class MatchTest(unittest.TestCase):
+
+    def test_should_apply_diff(self):
+        dmp = dmp_module.diff_match_patch()
+
+        def _diff(a_line, b_line):
+            diff = dmp.diff_main(a_line, b_line)
+            dmp.diff_cleanupSemantic(diff)
+            return diff
+
+        def _ok_diff(a_line, b_line):
+            self.assertTrue(should_apply_diff(_diff(a_line, b_line)))
+
+        def _ko_diff(a_line, b_line):
+            self.assertFalse(should_apply_diff(_diff(a_line, b_line)))
+
+        a_line = 'Hello man!'
+        b_line = 'Hello world!'
+        _ok_diff(a_line, b_line)
+
+        a_line = '            this.projectId, this.hash);'
+        b_line = (
+            '            this.projectId, this.hash, '
+            'this.ignoreAllSpace, this.context);')
+        _ok_diff(a_line, b_line)
+
+        a_line = '  getDiff(projectId, hash) {'
+        b_line = '  getDiff(projectId, hash, ignoreAllSpace, unified) {'
+        _ok_diff(a_line, b_line)
+
+        a_line = '    return this.http.get(url);'
+        b_line = '    let params = new HttpParams();'
+        _ko_diff(a_line, b_line)
+
+        a_line = '    return this.http.get(url);'
+        b_line = '    return this.http.post(other_url);'
+        _ok_diff(a_line, b_line)
+
+        a_line = 'Hello world'
+        b_line = 'Hallo xosle'
+        # TODO: should not match
+        _ok_diff(a_line, b_line)
+
+        a_line = 'This is a long sentence'
+        b_line = 'There is a cat in the kitchen'
+        # TODO: should match
+        _ko_diff(a_line, b_line)
+
+    def test_transform_lines(self):
+        group = [
+            {
+                'type': DIFF_LINE_TYPE_CONTEXT,
+                'content': ' Context before',
+            },
+            {
+                'type': DIFF_LINE_TYPE_DELETED,
+                'content': '- Hello world',
+            },
+            {
+                'type': DIFF_LINE_TYPE_ADDED,
+                'content': '+ Hello',
+            },
+            {
+                'type': DIFF_LINE_TYPE_CONTEXT,
+                'content': ' Context after',
+            },
+        ]
+
+        expected = [
+            {
+                'type': DIFF_LINE_TYPE_CONTEXT,
+                'content': [(0, ' Context before')],
+            },
+            {
+                'type': DIFF_LINE_TYPE_DELETED,
+                'content': [(0, '-'), (0, ' Hello'), (-1, ' world')],
+            },
+            {
+                'type': DIFF_LINE_TYPE_ADDED,
+                'content': [(0, '+'), (0, ' Hello')],
+            },
+            {
+                'type': DIFF_LINE_TYPE_CONTEXT,
+                'content': [(0, ' Context after')],
+            },
+        ]
+        transform_lines(group)
+        self.assertEqual(group, expected)

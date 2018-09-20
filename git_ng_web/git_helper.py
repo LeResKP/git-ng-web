@@ -4,14 +4,15 @@ from git import Repo, NULL_TREE, Blob
 import os
 import binascii
 
+from . import match
 
-# These constant values are used in angular
-DIFF_LINE_TYPE_ADDED = 'added'
-DIFF_LINE_TYPE_DELETED = 'deleted'
-DIFF_LINE_TYPE_CONTEXT = 'context'
-DIFF_LINE_TYPE_EXTRA_CONTEXT = 'extra'
-DIFF_LINE_TYPE_EXPAND = 'expand'
-DIFF_LINE_TYPE_HIDDEN = 'hidden'
+from .match import (
+    DIFF_LINE_TYPE_ADDED,
+    DIFF_LINE_TYPE_DELETED,
+    DIFF_LINE_TYPE_CONTEXT,
+    DIFF_LINE_TYPE_EXTRA_CONTEXT,
+    DIFF_LINE_TYPE_EXPAND,
+)
 
 DIFF_CONTEXT_LINE = 20
 
@@ -265,7 +266,10 @@ class Git(object):
                 after_filename, h)
 
         nb_lines = len(content_by_lines)
-        return _parse_patch(content, nb_lines)
+        groups = _parse_patch(content, nb_lines)
+        for g in groups:
+            match.transform_lines(g)
+        return groups
 
     def get_diff_context(self, filename, h,
                          a_line_num, a_hunk_size,
@@ -333,16 +337,17 @@ class Git(object):
     def _get_diff(self, commit, create_patch,
                   ignore_all_space=False, unified=DEFAULT_DIFF_CONTEXT):
         unified = unified if unified is not None else DEFAULT_DIFF_CONTEXT
+        kw = {
+            'create_patch': create_patch,
+            'ignore_all_space': ignore_all_space,
+            'unified': unified,
+        }
         if commit.parents:
             # When it's a merge commit we have 2 parents.
             assert len(commit.parents) < 3
-            return commit.parents[0].diff(
-                commit, create_patch=create_patch,
-                ignore_all_space=ignore_all_space, unified=unified)
+            return commit.parents[0].diff(commit, **kw)
         else:
-            return commit.diff(NULL_TREE, create_patch=create_patch,
-                               ignore_all_space=ignore_all_space,
-                               unified=unified)
+            return commit.diff(NULL_TREE, **kw)
 
     def get_diff(self, h, ignore_all_space=False, unified=DEFAULT_DIFF_CONTEXT):
         commit = self.repo.commit(h)

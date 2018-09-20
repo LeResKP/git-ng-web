@@ -40,8 +40,16 @@ a.nostyle:hover {
   background-color: #e5ffe5;
 }
 
+.code-part-added {
+  background: #ACFBB0;
+}
+
 .code-line-deleted {
   background-color: #ffeaea;
+}
+
+.code-part-deleted {
+  background: #F7B4B5;
 }
 
 .code-line-expand {

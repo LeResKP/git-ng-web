@@ -57,7 +57,7 @@
                   <td class="code-line-number">{{line.a_line_num}}</td>
                   <td class="code-line-number">{{line.b_line_num}}</td>
                 </ng-template>
-                <td class="code-pre">{{line.content}}</td>
+                <td class="code-pre"><ng-template ngFor let-content [ngForOf]="line.content"><span [class.code-part-added]="content[0] === 1" [class.code-part-deleted]="content[0] === -1">{{ content[1] }}</span></ng-template></td>
               </tr>
             </ng-template>
             </ng-template>
