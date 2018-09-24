@@ -12,7 +12,7 @@ export interface SelectorChoice {
   selector: 'app-selector, [app-selector]',
   template: `
 	<span ngbDropdown>
-		<a id="dropdownBasic1" ngbDropdownToggle class="nav-link">{{choice || label}}</a>
+		<a id="dropdownBasic1" ngbDropdownToggle class="nav-link active">{{choice || label}}</a>
 		<div ngbDropdownMenu aria-labelledby="dropdownBasic1">
 			<a [routerLink]="c.routerLink" routerLinkActive="active" class="dropdown-item" *ngFor="let c of choices">{{c.label}}</a>
 		</div>
