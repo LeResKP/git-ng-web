@@ -44,24 +44,26 @@
       <div *ngFor="let d of data.diffs" class="card mb-4">
         <div class="card-body" [id]="d.path">
           <div class="card-title">{{d.title}}</div>
-          <table class="table-code" *ngIf="d.groups.length">
-            <ng-template ngFor let-lines [ngForOf]="d.groups">
-              <ng-template ngFor let-line [ngForOf]="lines">
-              <tr [class]="'code-line-' + line.type" *ngIf="line.type !== 'hidden'">
-                <ng-template [ngIf]="line.type === 'expand'">
-                  <td colspan="2" class="text-center">
-                    <a href="#" (click)="expand(line, d.path, lines)" class="d-block"><i class="fas fa-arrows-alt-v"></i></a>
-                  </td>
-                </ng-template>
-                <ng-template [ngIf]="line.type !== 'expand'">
-                  <td class="code-line-number">{{line.a_line_num}}</td>
-                  <td class="code-line-number">{{line.b_line_num}}</td>
-                </ng-template>
-                <td class="code-pre"><ng-template ngFor let-content [ngForOf]="line.content"><span [class.code-part-added]="content[0] === 1" [class.code-part-deleted]="content[0] === -1">{{ content[1] }}</span></ng-template></td>
-              </tr>
-            </ng-template>
-            </ng-template>
-          </table>
+          <div class="code-container">
+            <table class="table-code" *ngIf="d.groups.length">
+              <ng-template ngFor let-lines [ngForOf]="d.groups">
+                <ng-template ngFor let-line [ngForOf]="lines">
+                <tr [class]="'code-line-' + line.type" *ngIf="line.type !== 'hidden'">
+                  <ng-template [ngIf]="line.type === 'expand'">
+                    <td colspan="2" class="text-center">
+                      <a href="#" (click)="expand(line, d.path, lines)" class="d-block"><i class="fas fa-arrows-alt-v"></i></a>
+                    </td>
+                  </ng-template>
+                  <ng-template [ngIf]="line.type !== 'expand'">
+                    <td class="code-line-number">{{line.a_line_num}}</td>
+                    <td class="code-line-number">{{line.b_line_num}}</td>
+                  </ng-template>
+                  <td class="code-pre"><ng-template ngFor let-content [ngForOf]="line.content"><span [class.code-part-added]="content[0] === 1" [class.code-part-deleted]="content[0] === -1">{{ content[1] }}</span></ng-template></td>
+                </tr>
+              </ng-template>
+              </ng-template>
+            </table>
+          </div>
           <div *ngIf="!d.groups.length">No content</div>
         </div>
       </div>

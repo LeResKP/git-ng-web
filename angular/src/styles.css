@@ -10,6 +10,10 @@ a.nostyle:hover {
   text-decoration: none;
 }
 
+.code-container {
+  overflow-y: auto;
+}
+
 .table-code {
   font-size: 12px;
   width: 100%;
