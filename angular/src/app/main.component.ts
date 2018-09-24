@@ -26,7 +26,7 @@ export class RedirectComponent implements OnInit {
 
 @Component({
   template: `
-    <nav class="navbar navbar-expand-sm navbar-light bg-light p-0">
+    <nav class="navbar navbar-expand-sm navbar-dark bg-dark p-0">
       <a class="navbar-brand col-md-2" href="#">Git ngWeb</a>
       <ul class="navbar-nav mr-auto">
         <li class="nav-item dropdown" app-selector label="Project" [choices]="projectChoices" [value]="projectId"></li>
