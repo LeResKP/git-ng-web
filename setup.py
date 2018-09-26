@@ -15,6 +15,7 @@ requires = [
     'pyramid_debugtoolbar',
     'waitress',
     'gitpython',
+    'uwsgi',
 ]
 
 tests_require = [
