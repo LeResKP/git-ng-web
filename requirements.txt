@@ -1,0 +1,7 @@
+plaster_pastedeploy
+pyramid
+pyramid_mako
+pyramid_debugtoolbar
+waitress
+gitpython
+uwsgi
