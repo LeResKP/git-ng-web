@@ -16,6 +16,7 @@ requires = [
     'waitress',
     'gitpython',
     'uwsgi',
+    'diff_match_patch',
 ]
 
 tests_require = [

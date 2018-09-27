@@ -5,3 +5,5 @@ pyramid_debugtoolbar
 waitress
 gitpython
 uwsgi
+diff_match_patch
+mock
