@@ -8,8 +8,10 @@ import { shareReplay, map } from 'rxjs/operators';
 
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
+import { environment } from '../environments/environment';
 
-const baseHref = 'http://127.0.0.1:6543/';
+
+const baseHref = environment.apiBaseHref;
 
 const API_URLS: any = {
   projects: `${baseHref}api/projects`,
