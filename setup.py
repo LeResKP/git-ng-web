@@ -28,7 +28,7 @@ tests_require = [
 
 setup(
     name='git_ng_web',
-    version='0.0',
+    version='0.0.1-alpha.2',
     description='Git Ng Web',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
