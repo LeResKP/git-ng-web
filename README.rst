@@ -1,29 +1,21 @@
 Git Ng Web
 ==========
 
-Getting Started
----------------
+Installation
+-------------
 
-- Change directory into your newly created project.
+.. code-block:: bash
 
-    cd git_ng_web
+  cd where_i_want_to_install_the_package
+  wget https://raw.githubusercontent.com/waxe/waxe-image/develop/install.sh
+  sh ./install.sh
 
-- Create a Python virtual environment.
 
-    python3 -m venv env
+Start / stop the server
+-----------------------
 
-- Upgrade packaging tools.
+.. code-block:: bash
 
-    env/bin/pip install --upgrade pip setuptools
-
-- Install the project in editable mode with its testing requirements.
-
-    env/bin/pip install -e ".[testing]"
-
-- Run your project's tests.
-
-    env/bin/pytest
-
-- Run your project.
-
-    env/bin/pserve development.ini
+  ./git_ng_web.sh start
+  ./git_ng_web.sh stop
+  ./git_ng_web.sh restart
