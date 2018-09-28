@@ -1,15 +1,17 @@
-from collections import defaultdict
 import json
+from pyramid.exceptions import HTTPNotFound
+from pyramid.response import Response
 from pyramid.view import view_config
 
 from . import git_helper as git
 
-from git import Repo
 
-
-@view_config(route_name='home', renderer='templates/mytemplate.mako')
+@view_config(context=HTTPNotFound)
+@view_config(route_name='home')
 def my_view(request):
-    return {'project': 'Git Ng Web'}
+    path = request.registry.settings['ng_static_path']
+    with open('%s/index.html' % path, 'r') as f:
+        return Response(f.read())
 
 
 def get_projects_from_settings(request):

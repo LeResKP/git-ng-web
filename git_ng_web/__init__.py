@@ -31,7 +31,6 @@ def main(global_config, **settings):
 
     config.include('pyramid_mako')
     config.add_subscriber(add_cors_headers_response_callback, NewRequest)
-    config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/')
     config.add_route('projects', '/api/projects')
     config.add_route('logs', '/api/projects/:project_id/logs')
@@ -40,6 +39,8 @@ def main(global_config, **settings):
     config.add_route('diff_context',
                      '/api/projects/:project_id/diff/:hash/context',
                      request_method='POST')
+    config.add_static_view('', settings['ng_static_path'],
+                           cache_max_age=3600)
 
     # TODO: code OPTIONS properly
     config.add_route('opt',
