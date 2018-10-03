@@ -293,13 +293,13 @@ class Git(object):
                 'type': DIFF_LINE_TYPE_EXPAND,
                 'a_line_num': None,
                 'b_line_num': None,
-                'content': '@@ -%i,%i +%i,%i @@ %s' % (
+                'content': [(0, '@@ -%i,%i +%i,%i @@ %s' % (
                     a_line_num - DIFF_CONTEXT_LINE,
                     a_hunk_size + DIFF_CONTEXT_LINE,
                     b_line_num - DIFF_CONTEXT_LINE,
                     b_hunk_size + DIFF_CONTEXT_LINE,
                     content_by_lines[line_numbers[0] - 1]
-                ),
+                ))],
                 'context_data': {
                     'a_line_num': a_line_num - DIFF_CONTEXT_LINE,
                     'b_line_num': b_line_num - DIFF_CONTEXT_LINE,
@@ -314,7 +314,7 @@ class Git(object):
                 'type': DIFF_LINE_TYPE_EXTRA_CONTEXT,
                 'a_line_num': n - (b_line_num - a_line_num),
                 'b_line_num': n,
-                'content': ' %s' % content_by_lines[n]
+                'content': [(0, ' %s' % content_by_lines[n])]
             })
 
         if (prev_b_line_num is None and
@@ -323,7 +323,7 @@ class Git(object):
                 'type': DIFF_LINE_TYPE_EXPAND,
                 'a_line_num': None,
                 'b_line_num': None,
-                'content': '',
+                'content': [],
                 'context_data': {
                     'a_line_num': lines[-1]['a_line_num'] + 1,
                     'b_line_num': lines[-1]['b_line_num'] + 1,
