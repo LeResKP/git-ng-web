@@ -1,5 +1,6 @@
 from collections import defaultdict
-import diff_match_patch as dmp_module
+from difflib import SequenceMatcher
+import string
 
 
 # These constant values are used in angular
@@ -10,37 +11,37 @@ DIFF_LINE_TYPE_EXTRA_CONTEXT = 'extra'
 DIFF_LINE_TYPE_EXPAND = 'expand'
 
 
-SCORE_CACHE = {}
+DEL = -1
+CTX = 0
+ADD = 1
+SEPARATORS = [' ', '!', '(', ')', '_', ',', '.', '[', ']', "'", '"']
+
+
+def _remove_punctuation(s):
+    for p in string.punctuation:
+        s = s.replace(p, '')
+    return s
+
+
+def _has_context(lis):
+    for t, s in lis:
+        if t == CTX:
+            n = _remove_punctuation(s)
+            if n and n.strip():
+                print 'OK'
+                return True
+    return False
+
+
+def apply_diff(lis):
+    return _has_context(lis)
 
 
 def get_line(line):
     return line['content'][1:]
 
 
-def should_apply_diff(diff):
-    part_types = [p[0] for p in diff]
-    non_context = [p[0] for p in diff if p[0] != 0]
-    len_by_type = defaultdict(int)
-
-    for p in diff:
-        len_by_type[p[0]] += len(p[1])
-
-    if len(set(non_context)) == 1:
-        return True
-
-    if len(set(part_types)) == 3:
-        ctx = len_by_type.get(0)
-        if not ctx:
-            return False
-
-        if float(ctx) / sum(len_by_type.values()) > 0.25:
-            return True
-
-    return False
-
-
 def transform_lines(group):
-    dmp = dmp_module.diff_match_patch()
     previous = None
     for line in group:
         if (previous and previous['type'] == DIFF_LINE_TYPE_DELETED and
@@ -48,11 +49,12 @@ def transform_lines(group):
             a_line = get_line(previous)
             b_line = get_line(line)
             if a_line and b_line:
-                diff = dmp.diff_main(a_line, b_line)
-                dmp.diff_cleanupSemantic(diff)
-                if should_apply_diff(diff):
-                    previous['content'] = [(0, '-')] + [d for d in diff if d[0] in (0, -1)]
-                    line['content'] = [(0, '+')] + [d for d in diff if d[0] in (0, 1)]
+                diff = seq_diff(a_line, b_line)
+                if apply_diff(diff):
+                    previous['content'] = [(0, '-')] + [
+                        d for d in diff if d[0] in (CTX, DEL)]
+                    line['content'] = [(0, '+')] + [
+                        d for d in diff if d[0] in (CTX, ADD)]
 
         previous = line
 
@@ -60,3 +62,70 @@ def transform_lines(group):
     for line in group:
         if not isinstance(line['content'], list):
             line['content'] = [(0, line['content'])]
+
+
+def get_separator_positions(s):
+    case = None
+    lis = [len(s)]
+    for index, c in enumerate(s):
+        if c in SEPARATORS:
+            lis.append(index)
+            case = None
+        else:
+            # TODO: rewrite this logic
+            if c in string.lowercase:
+                if case == 'upper':
+                    case = None
+                else:
+                    case = 'lower'
+            elif c in string.uppercase:
+                if case == 'lower':
+                    lis.append(index)
+                    case = None
+                else:
+                    case = 'upper'
+    return lis
+
+
+def seq_diff(a, b):
+    s = SequenceMatcher(None, a, b)
+
+    a_spaces = get_separator_positions(a)
+    b_spaces = get_separator_positions(b)
+    lis = []
+    s_a = ''
+    s_b = ''
+
+    def add(s_a, s_b):
+        if s_a == s_b and s_a and s_b:
+            lis.append((CTX, s_a))
+            return '', ''
+
+        if s_a:
+            lis.append((DEL, s_a))
+
+        if s_b:
+            lis.append((ADD, s_b))
+        return '', ''
+
+    def ready(pos, s_x, spaces):
+        return pos in spaces or s_x[-1] in SEPARATORS
+
+    for tag, a1, a2, b1, b2 in s.get_opcodes():
+        s_a += a[a1:a2]
+        s_b += b[b1:b2]
+
+        if not s_a and s_b:
+            if ready(b2, s_b, b_spaces):
+                s_a, s_b = add(s_a, s_b)
+
+        elif s_a and not s_b:
+            if ready(a2, s_a, a_spaces):
+                s_a, s_b = add(s_a, s_b)
+
+        else:
+            if ready(a2, s_a, a_spaces) and ready(b2, s_b, b_spaces):
+                s_a, s_b = add(s_a, s_b)
+
+    add(s_a, s_b)
+    return lis

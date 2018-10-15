@@ -1,6 +1,5 @@
 import unittest
 
-import diff_match_patch as dmp_module
 from mock import patch
 from pyramid import testing
 
@@ -14,7 +13,10 @@ from .git_helper import (
     DIFF_LINE_TYPE_CONTEXT,
 )
 
-from .match import should_apply_diff, transform_lines
+from .match import (
+    transform_lines,
+    seq_diff,
+)
 
 
 def clean_patch(patch):
@@ -550,7 +552,7 @@ class TestGitHelper(unittest.TestCase):
                                             prev_b_line_num=0, **data)
             expected = [
                 {
-                    'content': ' This is a new file:',
+                    'content': [(0, ' This is a new file:')],
                     'a_line_num': 1,
                     'type': 'extra',
                     'b_line_num': 1
@@ -591,31 +593,31 @@ class TestGitHelper(unittest.TestCase):
                 {
                     'a_line_num': 1,
                     'b_line_num': 1,
-                    'content': ' This is a new file:',
+                    'content': [(0, ' This is a new file:')],
                     'type': 'extra',
                 },
                 {
                     'a_line_num': 2,
                     'b_line_num': 2,
-                    'content': ' ',
+                    'content': [(0, ' ')],
                     'type': 'extra'
                 },
                 {
                     'a_line_num': 3,
                     'b_line_num': 3,
-                    'content': ' line 1',
+                    'content': [(0, ' line 1')],
                     'type': 'extra'
                 },
                 {
                     'a_line_num': 4,
                     'b_line_num': 4,
-                    'content': ' line 2',
+                    'content': [(0, ' line 2')],
                     'type': 'extra'
                 },
                 {
                     'a_line_num': 5,
                     'b_line_num': 5,
-                    'content': ' line 3',
+                    'content': [(0, ' line 3')],
                     'type': 'extra'
                 }
             ]
@@ -641,25 +643,25 @@ class TestGitHelper(unittest.TestCase):
                                             prev_b_line_num=None, **data)
             expected = [
                 {
-                    'content': ' line 10',
+                    'content': [(0, ' line 10')],
                     'a_line_num': 9,
                     'type': 'extra',
                     'b_line_num': 10
                 },
                 {
-                    'content': ' line 11',
+                    'content': [(0, ' line 11')],
                     'a_line_num': 10,
                     'type': 'extra',
                     'b_line_num': 11
                 },
                 {
-                    'content': ' line 12',
+                    'content': [(0, ' line 12')],
                     'a_line_num': 11,
                     'type': 'extra',
                     'b_line_num': 12
                 },
                 {
-                    'content': ' line 13',
+                    'content': [(0, ' line 13')],
                     'a_line_num': 12,
                     'type': 'extra',
                     'b_line_num': 13
@@ -701,7 +703,7 @@ class TestGitHelper(unittest.TestCase):
                 {
                     'a_line_num': None,
                     'b_line_num': None,
-                    'content': '@@ -3,6 +3,7 @@ ',
+                    'content': [(0, '@@ -3,6 +3,7 @@ ')],
                     'context_data': {
                         'a_hunk_size': 6,
                         'a_line_num': 3,
@@ -714,19 +716,19 @@ class TestGitHelper(unittest.TestCase):
                 {
                     'a_line_num': 3,
                     'b_line_num': 3,
-                    'content': ' line 1',
+                    'content': [(0, ' line 1')],
                     'type': 'extra'
                 },
                 {
                     'a_line_num': 4,
                     'b_line_num': 4,
-                    'content': ' line 2',
+                    'content': [(0, ' line 2')],
                     'type': 'extra'
                 },
                 {
                     'a_line_num': 5,
                     'b_line_num': 5,
-                    'content': ' line 3',
+                    'content': [(0, ' line 3')],
                     'type': 'extra'
                 }
             ]
@@ -739,13 +741,13 @@ class TestGitHelper(unittest.TestCase):
                 {
                     'a_line_num': 1,
                     'b_line_num': 1,
-                    'content': ' This is a new file:',
+                    'content': [(0, ' This is a new file:')],
                     'type': 'extra',
                 },
                 {
                     'a_line_num': 2,
                     'b_line_num': 2,
-                    'content': ' ',
+                    'content': [(0, ' ')],
                     'type': 'extra'
                 },
             ]
@@ -771,19 +773,19 @@ class TestGitHelper(unittest.TestCase):
                                             prev_b_line_num=None, **data)
             expected = [
                 {
-                    'content': ' line 10',
+                    'content': [(0, ' line 10')],
                     'a_line_num': 9,
                     'type': 'extra',
                     'b_line_num': 10
                 },
                 {
-                    'content': ' line 11',
+                    'content': [(0, ' line 11')],
                     'a_line_num': 10,
                     'type': 'extra',
                     'b_line_num': 11
                 },
                 {
-                    'content': ' line 12',
+                    'content': [(0, ' line 12')],
                     'a_line_num': 11,
                     'type': 'extra',
                     'b_line_num': 12
@@ -791,7 +793,7 @@ class TestGitHelper(unittest.TestCase):
                 {
                     'a_line_num': None,
                     'b_line_num': None,
-                    'content': '',
+                    'content': [],
                     'context_data': {
                         'a_hunk_size': None,
                         'a_line_num': 12,
@@ -808,7 +810,7 @@ class TestGitHelper(unittest.TestCase):
                                             **expected[-1]['context_data'])
             expected = [
                 {
-                    'content': ' line 13',
+                    'content': [(0, ' line 13')],
                     'a_line_num': 12,
                     'type': 'extra',
                     'b_line_num': 13
@@ -863,7 +865,7 @@ class TestGitHelper(unittest.TestCase):
                 filename, h, prev_b_line_num=prev_b_line_num, **data)
             expected = [
                 {
-                    'content': '@@ -5,4 +6,5 @@ line 2',
+                    'content': [(0, '@@ -5,4 +6,5 @@ line 2')],
                     'a_line_num': None,
                     'type': 'expand',
                     'context_data': {
@@ -876,7 +878,7 @@ class TestGitHelper(unittest.TestCase):
                     'b_line_num': None
                 },
                 {
-                    'content': ' line 3',
+                    'content': [(0, ' line 3')],
                     'a_line_num': 5,
                     'type': 'extra',
                     'b_line_num': 6
@@ -888,7 +890,7 @@ class TestGitHelper(unittest.TestCase):
                 filename, h, **expected[0]['context_data'])
             expected = [
                 {
-                    'content': ' line 2',
+                    'content': [(0, ' line 2')],
                     'a_line_num': 4,
                     'type':
                     'extra',
@@ -900,51 +902,137 @@ class TestGitHelper(unittest.TestCase):
 
 class MatchTest(unittest.TestCase):
 
-    def test_should_apply_diff(self):
-        dmp = dmp_module.diff_match_patch()
+    def test_seq(self):
 
-        def _diff(a_line, b_line):
-            diff = dmp.diff_main(a_line, b_line)
-            dmp.diff_cleanupSemantic(diff)
-            return diff
+        def _check(a_line, b_line, expected):
+            res = seq_diff(a_line, b_line)
+            self.assertEqual(res, expected)
 
-        def _ok_diff(a_line, b_line):
-            self.assertTrue(should_apply_diff(_diff(a_line, b_line)))
+            r_a = ''.join(s for t, s in res if t in [0, -1])
+            self.assertEqual(a_line, r_a)
 
-        def _ko_diff(a_line, b_line):
-            self.assertFalse(should_apply_diff(_diff(a_line, b_line)))
+            r_b = ''.join(s for t, s in res if t in [0, 1])
+            self.assertEqual(b_line, r_b)
 
         a_line = 'Hello man!'
         b_line = 'Hello world!'
-        _ok_diff(a_line, b_line)
+        expected = [(0, 'Hello '), (-1, 'man'), (1, 'world'), (0, '!')]
+        _check(a_line, b_line, expected)
+
+        a_line = 'a_b'
+        b_line = 'a_c'
+        expected = [(0, 'a_'), (-1, 'b'), (1, 'c')]
+        _check(a_line, b_line, expected)
+
+        a_line = 'b_a'
+        b_line = 'c_a'
+        expected = [(-1, 'b'), (1, 'c'), (0, '_a')]
+        _check(a_line, b_line, expected)
+
+        a_line = 'aB'
+        b_line = 'aC'
+        expected = [(0, 'a'), (-1, 'B'), (1, 'C')]
+        _check(a_line, b_line, expected)
 
         a_line = '            this.projectId, this.hash);'
         b_line = (
             '            this.projectId, this.hash, '
             'this.ignoreAllSpace, this.context);')
-        _ok_diff(a_line, b_line)
+        expected = [
+            (0, '            this.projectId, this.hash'),
+            (1, ', this.ignoreAllSpace, this.context'),
+            (0, ');')
+        ]
+        _check(a_line, b_line, expected)
 
         a_line = '  getDiff(projectId, hash) {'
         b_line = '  getDiff(projectId, hash, ignoreAllSpace, unified) {'
-        _ok_diff(a_line, b_line)
-
-        a_line = '    return this.http.get(url);'
-        b_line = '    let params = new HttpParams();'
-        _ko_diff(a_line, b_line)
+        expected = [
+            (0, '  getDiff(projectId, hash'),
+            (1, ', ignoreAllSpace, unified'),
+            (0, ') {')
+        ]
+        _check(a_line, b_line, expected)
 
         a_line = '    return this.http.get(url);'
         b_line = '    return this.http.post(other_url);'
-        _ok_diff(a_line, b_line)
+        expected = [
+            (0, '    return this.http.'),
+            (-1, 'get('),
+            (1, 'post('),
+            (1, 'other_'),
+            (0, 'url);')
+        ]
+        _check(a_line, b_line, expected)
+
+        a_line = '    return this.http.get(url);'
+        b_line = '    return this.http.getUrl(url);'
+        expected = [
+            (0, '    return this.http.get'),
+            (1, 'Url'),
+            (0, '(url);')
+        ]
+        _check(a_line, b_line, expected)
 
         a_line = 'Hello world'
         b_line = 'Hallo xosle'
-        # TODO: should not match
-        _ok_diff(a_line, b_line)
+        expected = [
+            (-1, 'Hello '), (1, 'Hallo '),
+            (-1, 'world'), (1, 'xosle'),
+        ]
+        _check(a_line, b_line, expected)
 
         a_line = 'This is a long sentence'
         b_line = 'There is a cat in the kitchen'
-        # TODO: should match
-        _ko_diff(a_line, b_line)
+        expected = [
+            (-1, 'This'),
+            (1, 'There'),
+            (0, ' is a '),
+            (-1, 'long'),
+            (1, 'cat in'),
+            (0, ' '),
+            (-1, 'sentence'),
+            (1, 'the kitchen')
+        ]
+        _check(a_line, b_line, expected)
+
+        a_line = 'This is a camel'
+        b_line = 'There is a camelCase'
+        expected = [
+            (-1, 'This'),
+            (1, 'There'),
+            (0, ' is a camel'),
+            (1, 'Case')
+        ]
+        _check(a_line, b_line, expected)
+
+        a_line = 'This is a line'
+        b_line = '     This is a line indented'
+        expected = [
+            (1, '     '),
+            (0, 'This is a line'),
+            (1, ' indented')
+        ]
+        _check(a_line, b_line, expected)
+
+        a_line = 'expected = ['
+        b_line = 'expected = [['
+        expected = [
+            (0, 'expected = ['),
+            (1, '[')
+        ]
+        _check(a_line, b_line, expected)
+
+        a_line = "dic['key']"
+        b_line = "dic['new']"
+        expected = [
+            (0, "dic['"),
+            (-1, 'key'),
+            (1, 'new'),
+            (0, "']"),
+
+        ]
+        _check(a_line, b_line, expected)
 
     def test_transform_lines(self):
         group = [
